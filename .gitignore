@@ -1,3 +1,15 @@
+# Artefactos de build (los genera el workflow de release, no van al repo)
+module.zip
+*.zip
+
+# Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Node (por si en el futuro agregás herramientas de build)
 node_modules/

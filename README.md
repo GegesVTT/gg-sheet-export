@@ -45,4 +45,4 @@ El diseño separa extracción (`extract.mjs`) de presentación (template, `print
 
 ---
 
-*GG Sheet Export v1.0.0 · GegesVTT · Crónicas de un Bardo*
+*GG Sheet Export v1.2.1 · GegesVTT · Crónicas de un Bardo*

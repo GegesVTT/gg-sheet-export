@@ -163,13 +163,26 @@ export async function extractActorData(actor) {
     const spells = spellItems
       .filter((s) => (s.system?.level ?? 0) === lvl)
       .map((s) => {
-        const prep = s.system?.preparation ?? {};
-        const props = setToArray(s.system?.properties);
+        // dnd5e 5.1+: system.method + system.prepared. Fallback a la API vieja (preparation.mode/prepared).
+        const sd = s.system ?? {};
+        let method, isPrepared;
+        if (sd.method !== undefined) {
+          method = sd.method;
+          isPrepared = sd.prepared;
+        } else {
+          const prep = sd.preparation ?? {};
+          method = prep.mode;
+          isPrepared = prep.prepared;
+        }
+        const props = setToArray(sd.properties);
+        // El catálogo de modos cambió de spellPreparationModes a spellcasting en 5.1
+        const modeMap = C.spellcasting ?? C.spellPreparationModes ?? {};
+        const usesPrep = method === "prepared" || method === "spell" || method === undefined;
         return {
           name: s.name,
-          school: cfgLabel(C.spellSchools, s.system?.school),
-          prepared: prep.mode === "prepared" ? (prep.prepared ? "●" : "○") : "●",
-          mode: prep.mode && prep.mode !== "prepared" ? cfgLabel(C.spellPreparationModes, prep.mode) : "",
+          school: cfgLabel(C.spellSchools, sd.school),
+          prepared: usesPrep ? (isPrepared ? "●" : "○") : "●",
+          mode: method && !usesPrep ? cfgLabel(modeMap, method) : "",
           conc: props.includes("concentration") ? "C" : "",
           ritual: props.includes("ritual") ? "R" : ""
         };
@@ -177,10 +190,13 @@ export async function extractActorData(actor) {
       .sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
     if (spells.length) {
       const slot = sys.spells?.[`spell${lvl}`];
+      const max = slot?.max ?? 0;
+      const avail = Math.min(slot?.value ?? 0, max);
       spellLevels.push({
         level: lvl,
         label: lvl === 0 ? loc("GGSE.Cantrips") : `${loc("GGSE.Level")} ${lvl}`,
-        slots: lvl > 0 && slot?.max ? `${slot.value ?? 0}/${slot.max}` : "",
+        slots: lvl > 0 && max ? `${slot.value ?? 0}/${max}` : "",
+        bubbles: lvl > 0 && max ? "●".repeat(avail) + "○".repeat(max - avail) : "",
         spells
       });
     }
@@ -202,17 +218,42 @@ export async function extractActorData(actor) {
       };
     });
 
-  /* --- inventario --- */
+  /* --- rasgos agrupados por origen --- */
+  const ORIGIN_KEYS = { race: "GGSE.OriginRace", class: "GGSE.OriginClass", subclass: "GGSE.OriginClass",
+    background: "GGSE.OriginBackground", feat: "GGSE.OriginFeat" };
+  const featureGroups = [];
+  for (const f of features) { f._origin = null; }
+  for (const item of actor.items.filter((i) => i.type === "feat")) {
+    const key = ORIGIN_KEYS[item.system?.type?.value] ?? "GGSE.OriginOther";
+    const label = loc(key);
+    let g = featureGroups.find((x) => x.label === label);
+    if (!g) featureGroups.push(g = { label, feats: [] });
+    const uses = item.system?.uses;
+    g.feats.push({ name: item.name, uses: uses?.max ? `${uses.value ?? 0}/${uses.max}` : "" });
+  }
+
+  /* --- inventario agrupado por categoría, equipados primero --- */
   const INV_TYPES = ["weapon", "equipment", "consumable", "tool", "loot", "container"];
+  const CAT_KEYS = { weapon: "GGSE.CatWeapons", equipment: "GGSE.CatEquipment", consumable: "GGSE.CatConsumables",
+    tool: "GGSE.CatTools", container: "GGSE.CatContainers", loot: "GGSE.CatLoot" };
   const inventory = actor.items
     .filter((i) => INV_TYPES.includes(i.type))
     .map((i) => ({
       name: i.name,
-      type: cfgLabel(C.itemTypes ?? {}, i.type) || i.type,
+      type: i.type,
       qty: i.system?.quantity ?? 1,
-      weight: i.system?.weight?.value ?? i.system?.weight ?? "",
+      weight: i.system?.weight?.value || "",
       equipped: i.system?.equipped ? "●" : ""
     }));
+  const invGroups = INV_TYPES
+    .map((t) => ({
+      label: loc(CAT_KEYS[t]),
+      rows: inventory
+        .filter((i) => i.type === t)
+        .sort((a, b) => (a.equipped === b.equipped ? a.name.localeCompare(b.name, game.i18n.lang) : a.equipped ? -1 : 1))
+    }))
+    .filter((g) => g.rows.length);
+  const totalWeight = inventory.reduce((n, i) => n + (Number(i.weight) || 0) * (i.qty ?? 1), 0);
 
   const currency = Object.entries(sys.currency ?? {})
     .filter(([, v]) => v > 0)
@@ -250,8 +291,21 @@ export async function extractActorData(actor) {
     movement,
     senses,
     inspiration: !!attrs.inspiration,
+    hitDice: (() => {
+      const hd = attrs.hd;
+      if (hd && typeof hd === "object" && hd.max) return `${hd.value ?? 0}/${hd.max}`;
+      return "";
+    })(),
+    deathSaves: {
+      success: "●".repeat(attrs.death?.success ?? 0) + "○".repeat(Math.max(0, 3 - (attrs.death?.success ?? 0))),
+      failure: "●".repeat(attrs.death?.failure ?? 0) + "○".repeat(Math.max(0, 3 - (attrs.death?.failure ?? 0)))
+    },
+    passive: sys.skills?.prc?.passive ?? "",
     abilities,
     skills,
+    featureGroups,
+    invGroups,
+    totalWeight,
     languages,
     resist,
     immune,

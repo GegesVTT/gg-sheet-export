@@ -1,0 +1,71 @@
+# Publica una release de Foundry automáticamente al pushear un tag "vX.Y.Z".
+# Inyecta la versión y las URLs correctas en module.json, arma module.zip
+# con la estructura que Foundry espera, y crea la release con ambos assets.
+
+name: Release
+
+# Se dispara solo cuando se pushea un tag que empiece con "v".
+on:
+  push:
+    tags:
+      - "v*"
+
+# Permiso mínimo para que la Action pueda crear la release en este repo.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Traer el código del repo en el commit que tiene el tag.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Derivar la versión (sin la "v") a partir del nombre del tag.
+      #    Ej: tag "v1.2.2" -> VERSION "1.2.2".
+      - name: Obtener versión del tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # 3. Reescribir los campos dinámicos de module.json usando jq.
+      #    - version: la del tag (fuente de verdad única).
+      #    - manifest: siempre apunta a "latest" (para el botón Update).
+      #    - download: apunta al zip de ESTA release concreta.
+      - name: Inyectar versión y URLs en module.json
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          REPO: ${{ github.repository }}
+        run: |
+          jq --arg v "$VERSION" --arg repo "$REPO" '
+            .version = $v
+            | .url = "https://github.com/\($repo)"
+            | .manifest = "https://github.com/\($repo)/releases/latest/download/module.json"
+            | .download = "https://github.com/\($repo)/releases/download/v\($v)/module.zip"
+          ' module.json > module.json.tmp
+          mv module.json.tmp module.json
+          echo "----- module.json resultante -----"
+          cat module.json
+
+      # 4. Armar module.zip con los archivos en la RAÍZ del zip
+      #    (module.json en el primer nivel, sin carpeta contenedora).
+      - name: Empaquetar module.zip
+        run: |
+          zip -r module.zip \
+            module.json \
+            README.md \
+            scripts \
+            templates \
+            styles \
+            lang
+
+      # 5. Crear la release y adjuntar los dos assets sueltos.
+      #    softprops/action-gh-release lee el tag del contexto automáticamente.
+      - name: Publicar release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GG Sheet Export ${{ github.ref_name }}
+          files: |
+            module.json
+            module.zip
+          generate_release_notes: true
