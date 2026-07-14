@@ -2,7 +2,7 @@
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
   "description": "Visor de lectura elegante para hojas de personaje de D&D 5e, con exportación a PDF (impresión nativa) y Markdown. Parte de la familia GegesVTT.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "authors": [
     {
       "name": "Geges",
@@ -44,5 +44,32 @@
   ],
   "url": "https://github.com/GegesVTT/gg-sheet-export",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
-  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.2.1/module.zip"
+  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.2.2/module.zip",
+  "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",
+  "media": [
+    {
+      "type": "cover",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/cover.png",
+      "caption": "GG Sheet Export — GegesVTT"
+    },
+    {
+      "type": "icon",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/icon.png"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-antes-despues.jpg",
+      "caption": "Antes y después: ficha nativa vs. exportación"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-una-sola-vista.jpg",
+      "caption": "Todo en una sola vista de lectura"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-ficha-real.jpg",
+      "caption": "Ficha real de una mesa de campaña"
+    }
+  ]
 }

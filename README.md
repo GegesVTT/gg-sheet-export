@@ -1,10 +1,42 @@
-# GG Sheet Export
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/icon.png" width="120" alt="GG Sheet Export">
+</p>
 
-**Familia GegesVTT** · Visor de lectura elegante para hojas de personaje de D&D 5e en Foundry VTT, con exportación a **PDF** (impresión nativa, vectorial) y **Markdown** (listo para Obsidian).
+<h1 align="center">GG Sheet Export</h1>
+
+<p align="center">
+  <em>Familia GegesVTT</em> · Visor de lectura elegante para hojas de personaje de D&D 5e en Foundry VTT,<br>
+  con exportación a <strong>PDF</strong> (impresión nativa, vectorial) y <strong>Markdown</strong> (listo para Obsidian).
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/cover.png" width="100%" alt="GG Sheet Export — GegesVTT">
+</p>
+
+---
+
+## Capturas
+
+**Antes / después** — la misma ficha, nativa de Foundry vs. exportada con el módulo:
+
+![Antes y después](https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-antes-despues.jpg)
+
+**Todo en una sola vista** — en Foundry hay que saltar entre pestañas para ver combate, conjuros, rasgos e inventario. El visor lo pone todo en un solo scroll:
+
+![Todo en una sola vista](https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-una-sola-vista.jpg)
+
+**Una ficha real de mesa** — conjuros, inventario y biografía de un personaje de campaña real:
+
+![Ficha real de mesa](https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-ficha-real.jpg)
+
+---
 
 ## Instalación
 
-1. Copiá la carpeta `gg-sheet-export` dentro de `Data/modules/` de tu instalación de Foundry.
+1. Copiá la carpeta `gg-sheet-export` dentro de `Data/modules/` de tu instalación de Foundry, **o** instalá directamente con la URL de manifiesto:
+   ```
+   https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json
+   ```
 2. Activá **GG Sheet Export** en *Manage Modules* de tu mundo dnd5e.
 3. Abrí cualquier ficha de personaje o PNJ: vas a ver un ícono de libro abierto 📖 en el header de la ventana.
 
@@ -22,8 +54,8 @@
 const actor = game.actors.getName("Rahegal");
 const api = game.modules.get("gg-sheet-export").api;
 
-api.open(actor);            // abre el visor
-await api.exportPdf(actor); // exporta a PDF directo
+api.open(actor);                 // abre el visor
+await api.exportPdf(actor);      // exporta a PDF directo
 await api.exportMarkdown(actor); // descarga el .md
 ```
 
@@ -36,6 +68,7 @@ await api.exportMarkdown(actor); // descarga el .md
 ## Notas técnicas
 
 - La extracción de datos (`scripts/extract.mjs`) usa optional chaining en todas las rutas del data model de dnd5e, con fallbacks para las diferencias entre dnd5e 3.x, 4.x (activities) y 5.x. Si una versión futura cambia la estructura, lo esperable es que un campo aparezca como `—` en vez de romper el módulo.
+- Las fórmulas de daño con variables sin resolver (ej. `1 + @mod` en ataques desarmados o armas naturales) se resuelven con `Roll.replaceFormulaData` antes de mostrarse, usando el `rollData` propio del ítem.
 - El PDF usa `window.print()` sobre un documento HTML dedicado con `@page` A4. Esto da tipografía vectorial perfecta y respeta `break-inside` — muy superior a soluciones basadas en html2canvas/jsPDF.
 - Las fuentes Cinzel y Cormorant Garamond se cargan de Google Fonts en el documento de imprenta; sin conexión, degradan a Georgia/serif sin romper el layout.
 
@@ -45,4 +78,4 @@ El diseño separa extracción (`extract.mjs`) de presentación (template, `print
 
 ---
 
-*GG Sheet Export v1.2.1 · GegesVTT · Crónicas de un Bardo*
+<p align="center"><em>GG Sheet Export · GegesVTT · Crónicas de un Bardo</em></p>
