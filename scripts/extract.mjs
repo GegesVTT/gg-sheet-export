@@ -129,6 +129,22 @@ export async function extractActorData(actor) {
   const condImmune = traitList(traits.ci, C.conditionTypes);
 
   /* --- ataques (armas) --- */
+  // Algunas fórmulas de daño (ataque desarmado, armas "especiales" como un cuerno
+  // natural) llegan con variables sin resolver, ej. "1 + @mod" o "1d6 + @abilities.dex.mod".
+  // Foundry las resuelve recién al tirar el dado. Las resolvemos a mano acá con
+  // Roll.replaceFormulaData, usando el rollData propio del ítem (incluye el alias "mod"
+  // que dnd5e ya calcula para el arma).
+  function resolveFormula(formula, item) {
+    if (!formula || !formula.includes("@")) return formula;
+    try {
+      const rollData = item.getRollData?.() ?? actor.getRollData();
+      const RollCls = foundry.dice?.Roll ?? globalThis.Roll;
+      return RollCls.replaceFormulaData(formula, rollData, { missing: "0" });
+    } catch (e) {
+      return formula; // si falla, mejor mostrar la fórmula cruda que romper el módulo
+    }
+  }
+
   const attacks = actor.items
     .filter((i) => i.type === "weapon")
     .map((w) => {
@@ -146,6 +162,7 @@ export async function extractActorData(actor) {
           }
         } catch (e) { /* estructura distinta según versión: seguimos */ }
       }
+      damage = resolveFormula(damage, w);
       return {
         name: w.name,
         equipped: w.system?.equipped ? "●" : "○",
