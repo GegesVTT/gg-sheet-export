@@ -1,0 +1,263 @@
+/* GG Sheet Export — visor de lectura
+   Identidad Crónicas Bárdicas: Roble negro #19120D · Ámbar #E0A23C · Vino #8A2F3F */
+
+.gg-sheet-export {
+  --ggse-bg: #19120d;
+  --ggse-panel: #221913;
+  --ggse-ink: #efe6d6;
+  --ggse-dim: #a8977e;
+  --ggse-amber: #e0a23c;
+  --ggse-wine: #8a2f3f;
+  --ggse-rule: #3d2f22;
+}
+
+.gg-sheet-export .window-content,
+.gg-sheet-export .ggse-content {
+  background: var(--ggse-bg);
+  color: var(--ggse-ink);
+  padding: 0;
+  font-family: "Cormorant Garamond", "Palatino Linotype", Georgia, serif;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- barra de exportación ---------- */
+
+.gg-sheet-export .ggse-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--ggse-panel);
+  border-bottom: 1px solid var(--ggse-rule);
+  flex: 0 0 auto;
+}
+
+.gg-sheet-export .ggse-toolbar button {
+  flex: 0 0 auto;
+  width: auto;
+  background: transparent;
+  border: 1px solid var(--ggse-amber);
+  color: var(--ggse-amber);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.gg-sheet-export .ggse-toolbar button:hover {
+  background: var(--ggse-amber);
+  color: var(--ggse-bg);
+  box-shadow: none;
+}
+
+.gg-sheet-export .ggse-toolbar button:focus-visible {
+  outline: 2px solid var(--ggse-amber);
+  outline-offset: 2px;
+}
+
+/* ---------- cuerpo scrolleable ---------- */
+
+.gg-sheet-export .ggse-scroll {
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  flex: 1;
+}
+
+/* ---------- hero ---------- */
+
+.gg-sheet-export .ggse-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  border-bottom: 3px solid var(--ggse-amber);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.gg-sheet-export .ggse-portrait {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border: 2px solid var(--ggse-amber);
+  border-radius: 6px;
+  background: var(--ggse-panel);
+}
+
+.gg-sheet-export .ggse-hero h1 {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ggse-ink);
+  border: none;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.gg-sheet-export .ggse-subtitle {
+  font-style: italic;
+  color: var(--ggse-amber);
+  margin: 4px 0 0;
+}
+
+/* ---------- banda de combate ---------- */
+
+.gg-sheet-export .ggse-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  background: var(--ggse-panel);
+  border: 1px solid var(--ggse-rule);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.gg-sheet-export .ggse-band b {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ggse-dim);
+  margin-right: 4px;
+}
+
+/* ---------- características ---------- */
+
+.gg-sheet-export .ggse-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.gg-sheet-export .ggse-ab {
+  text-align: center;
+  border: 1px solid var(--ggse-rule);
+  border-radius: 6px;
+  padding: 6px 2px;
+  background: var(--ggse-panel);
+}
+
+.gg-sheet-export .ggse-ab-abbr {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ggse-amber);
+}
+
+.gg-sheet-export .ggse-ab-mod {
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.gg-sheet-export .ggse-ab-score {
+  font-size: 11px;
+  color: var(--ggse-dim);
+}
+
+.gg-sheet-export .ggse-ab-save {
+  font-size: 10px;
+  border-top: 1px solid var(--ggse-rule);
+  margin-top: 4px;
+  padding-top: 3px;
+  color: var(--ggse-dim);
+}
+
+/* ---------- secciones ---------- */
+
+.gg-sheet-export h2 {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ggse-amber);
+  border-bottom: 1px solid var(--ggse-rule);
+  padding-bottom: 3px;
+  margin: 14px 0 6px;
+}
+
+.gg-sheet-export h3 {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 12px;
+  color: var(--ggse-ink);
+  border: none;
+  margin: 8px 0 4px;
+}
+
+.gg-sheet-export .ggse-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 22px;
+}
+
+@media (max-width: 640px) {
+  .gg-sheet-export .ggse-cols { grid-template-columns: 1fr; }
+  .gg-sheet-export .ggse-abilities { grid-template-columns: repeat(3, 1fr); }
+}
+
+.gg-sheet-export table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  border: none;
+  margin: 0;
+}
+
+.gg-sheet-export td {
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--ggse-rule);
+  vertical-align: top;
+}
+
+.gg-sheet-export td.ggse-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.gg-sheet-export td.ggse-prof {
+  width: 16px;
+  color: var(--ggse-amber);
+}
+
+.gg-sheet-export .ggse-dim { color: var(--ggse-dim); font-size: 13px; }
+.gg-sheet-export .ggse-uses { color: var(--ggse-wine); font-size: 13px; }
+.gg-sheet-export .ggse-slots {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 13px;
+  color: var(--ggse-wine);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.gg-sheet-export .ggse-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gg-sheet-export .ggse-plain li {
+  padding: 3px 0;
+  border-bottom: 1px solid var(--ggse-rule);
+}
+
+.gg-sheet-export .ggse-spellmeta { margin: 0 0 6px; }
+.gg-sheet-export .ggse-currency { margin-top: 6px; }
+
+/* ---------- biografía ---------- */
+
+.gg-sheet-export .ggse-bio p { margin: 5px 0; }
+.gg-sheet-export .ggse-bio img { max-width: 100%; border-radius: 4px; }
+.gg-sheet-export .ggse-bio a { color: var(--ggse-amber); }
+
+/* ---------- botón en el header de la ficha ---------- */
+
+button.ggse-header-btn:hover {
+  color: var(--ggse-amber, #e0a23c);
+}

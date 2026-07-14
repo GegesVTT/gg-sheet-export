@@ -1,0 +1,39 @@
+{
+  "id": "gg-sheet-export",
+  "title": "GG Sheet Export",
+  "description": "Visor de lectura elegante para hojas de personaje de D&D 5e, con exportación a PDF (impresión nativa) y Markdown. Parte de la familia GegesVTT.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Geges",
+      "flags": { "brand": "GegesVTT" }
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {}
+      }
+    ]
+  },
+  "esmodules": ["scripts/main.mjs"],
+  "styles": ["styles/viewer.css"],
+  "languages": [
+    {
+      "lang": "es",
+      "name": "Español",
+      "path": "lang/es.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ]
+}

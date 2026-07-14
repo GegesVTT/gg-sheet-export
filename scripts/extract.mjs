@@ -1,0 +1,273 @@
+/**
+ * GG Sheet Export — extract.mjs
+ * Convierte un Actor dnd5e (character/npc) en un objeto plano y estable,
+ * pensado para alimentar el visor, el exportador Markdown y el PDF.
+ * Todo con optional chaining: los data models de dnd5e cambian seguido.
+ */
+
+const loc = (k) => game.i18n.localize(k);
+
+/* ---------- helpers ---------- */
+
+export function fmtMod(n) {
+  n = Number(n);
+  if (!Number.isFinite(n)) return "—";
+  return (n >= 0 ? "+" : "") + n;
+}
+
+function cfgLabel(cfg, key) {
+  const e = cfg?.[key];
+  if (!e) return key ?? "";
+  if (typeof e === "string") return e;
+  return e.label ?? key;
+}
+
+function setToArray(v) {
+  if (!v) return [];
+  if (v instanceof Set) return [...v];
+  if (Array.isArray(v)) return v;
+  if (typeof v === "object" && v.value !== undefined) return setToArray(v.value);
+  return [v];
+}
+
+/** Aplana el config anidado de idiomas de dnd5e moderno { standard: { children: {...} } } */
+function flattenLanguages(cfg, out = {}) {
+  for (const [k, v] of Object.entries(cfg ?? {})) {
+    if (typeof v === "string") out[k] = v;
+    else if (v && typeof v === "object") {
+      if (v.label) out[k] = v.label;
+      if (v.children) flattenLanguages(v.children, out);
+    }
+  }
+  return out;
+}
+
+function traitList(trait, configMap) {
+  if (!trait) return "";
+  const flat = flattenLanguages(configMap);
+  const parts = setToArray(trait.value ?? trait).map((k) => flat[k] ?? cfgLabel(configMap, k) ?? k);
+  const custom = (trait.custom ?? "").split(";").map((s) => s.trim()).filter(Boolean);
+  return [...parts, ...custom].join(", ");
+}
+
+function profMarker(p) {
+  if (p >= 2) return "◆"; // pericia
+  if (p >= 1) return "●"; // competente
+  if (p > 0) return "◐";  // media competencia
+  return "○";
+}
+
+/* ---------- extracción principal ---------- */
+
+export async function extractActorData(actor) {
+  const sys = actor.system ?? {};
+  const C = CONFIG.DND5E ?? {};
+  const isNPC = actor.type === "npc";
+
+  /* --- identidad --- */
+  const classes = actor.items
+    .filter((i) => i.type === "class")
+    .map((c) => {
+      const sub = actor.items.find(
+        (s) => s.type === "subclass" && (s.system?.classIdentifier === c.system?.identifier || !s.system?.classIdentifier)
+      );
+      return `${c.name}${sub ? ` (${sub.name})` : ""} ${c.system?.levels ?? ""}`.trim();
+    });
+
+  const raceItem = actor.items.find((i) => i.type === "race");
+  const bgItem = actor.items.find((i) => i.type === "background");
+  const race = raceItem?.name ?? (typeof sys.details?.race === "string" ? sys.details.race : "");
+  const background = bgItem?.name ?? (typeof sys.details?.background === "string" ? sys.details.background : "");
+
+  const level = sys.details?.level ?? actor.items
+    .filter((i) => i.type === "class")
+    .reduce((n, c) => n + (c.system?.levels ?? 0), 0);
+
+  /* --- atributos --- */
+  const abilities = Object.entries(sys.abilities ?? {}).map(([key, ab]) => {
+    const save = typeof ab.save === "object" ? ab.save?.value : ab.save;
+    const saveProf = typeof ab.save === "object" ? (ab.save?.proficient ?? ab.proficient) : ab.proficient;
+    return {
+      key,
+      label: cfgLabel(C.abilities, key),
+      abbr: (C.abilities?.[key]?.abbreviation ?? key).toUpperCase(),
+      value: ab.value ?? 10,
+      mod: fmtMod(ab.mod),
+      save: fmtMod(save ?? ab.mod),
+      saveProf: profMarker(saveProf ? 1 : 0)
+    };
+  });
+
+  const skills = Object.entries(sys.skills ?? {})
+    .map(([key, sk]) => ({
+      key,
+      label: cfgLabel(C.skills, key),
+      ability: (C.abilities?.[sk.ability]?.abbreviation ?? sk.ability ?? "").toUpperCase(),
+      total: fmtMod(sk.total),
+      passive: sk.passive ?? "",
+      prof: profMarker(sk.proficient ?? 0)
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
+
+  const attrs = sys.attributes ?? {};
+  const movement = Object.entries(attrs.movement ?? {})
+    .filter(([k, v]) => typeof v === "number" && v > 0)
+    .map(([k, v]) => `${cfgLabel(C.movementTypes, k)} ${v} ${attrs.movement?.units ?? "ft"}`)
+    .join(", ");
+
+  const senses = Object.entries(attrs.senses ?? {})
+    .filter(([k, v]) => typeof v === "number" && v > 0)
+    .map(([k, v]) => `${cfgLabel(C.senses, k)} ${v} ${attrs.senses?.units ?? "ft"}`)
+    .join(", ");
+
+  /* --- rasgos defensivos e idiomas --- */
+  const traits = sys.traits ?? {};
+  const languages = traitList(traits.languages, C.languages);
+  const resist = traitList(traits.dr, C.damageTypes);
+  const immune = traitList(traits.di, C.damageTypes);
+  const vuln = traitList(traits.dv, C.damageTypes);
+  const condImmune = traitList(traits.ci, C.conditionTypes);
+
+  /* --- ataques (armas) --- */
+  const attacks = actor.items
+    .filter((i) => i.type === "weapon")
+    .map((w) => {
+      let toHit = w.labels?.toHit ?? "";
+      let damage = w.labels?.damage ?? "";
+      if (!damage && Array.isArray(w.labels?.derivedDamage)) {
+        damage = w.labels.derivedDamage.map((d) => `${d.formula} ${d.damageType ?? ""}`.trim()).join(" + ");
+      }
+      // dnd5e 4+: buscar en activities si labels quedó vacío
+      if ((!toHit || !damage) && w.system?.activities) {
+        try {
+          for (const act of w.system.activities) {
+            toHit ||= act.labels?.toHit ?? "";
+            damage ||= act.labels?.damage ?? "";
+          }
+        } catch (e) { /* estructura distinta según versión: seguimos */ }
+      }
+      return {
+        name: w.name,
+        equipped: w.system?.equipped ? "●" : "○",
+        toHit: toHit || "—",
+        damage: damage || "—",
+        props: w.labels?.properties?.map?.((p) => p.label ?? p).join(", ") ?? ""
+      };
+    })
+    .sort((a, b) => (a.equipped === b.equipped ? 0 : a.equipped === "●" ? -1 : 1));
+
+  /* --- conjuros --- */
+  const spellItems = actor.items.filter((i) => i.type === "spell");
+  const spellLevels = [];
+  for (let lvl = 0; lvl <= 9; lvl++) {
+    const spells = spellItems
+      .filter((s) => (s.system?.level ?? 0) === lvl)
+      .map((s) => {
+        const prep = s.system?.preparation ?? {};
+        const props = setToArray(s.system?.properties);
+        return {
+          name: s.name,
+          school: cfgLabel(C.spellSchools, s.system?.school),
+          prepared: prep.mode === "prepared" ? (prep.prepared ? "●" : "○") : "●",
+          mode: prep.mode && prep.mode !== "prepared" ? cfgLabel(C.spellPreparationModes, prep.mode) : "",
+          conc: props.includes("concentration") ? "C" : "",
+          ritual: props.includes("ritual") ? "R" : ""
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
+    if (spells.length) {
+      const slot = sys.spells?.[`spell${lvl}`];
+      spellLevels.push({
+        level: lvl,
+        label: lvl === 0 ? loc("GGSE.Cantrips") : `${loc("GGSE.Level")} ${lvl}`,
+        slots: lvl > 0 && slot?.max ? `${slot.value ?? 0}/${slot.max}` : "",
+        spells
+      });
+    }
+  }
+  const pact = sys.spells?.pact;
+  const pactSlots = pact?.max ? `${pact.value ?? 0}/${pact.max} (${loc("GGSE.Level")} ${pact.level ?? "?"})` : "";
+  const spellDC = attrs.spelldc ?? sys.attributes?.spell?.dc ?? null;
+  const spellAbility = cfgLabel(C.abilities, attrs.spellcasting ?? sys.attributes?.spellcasting);
+
+  /* --- rasgos y dotes --- */
+  const features = actor.items
+    .filter((i) => i.type === "feat")
+    .map((f) => {
+      const uses = f.system?.uses;
+      return {
+        name: f.name,
+        subtitle: f.system?.type?.label ?? cfgLabel(C.featureTypes, f.system?.type?.value) ?? "",
+        uses: uses?.max ? `${uses.value ?? 0}/${uses.max}` : ""
+      };
+    });
+
+  /* --- inventario --- */
+  const INV_TYPES = ["weapon", "equipment", "consumable", "tool", "loot", "container"];
+  const inventory = actor.items
+    .filter((i) => INV_TYPES.includes(i.type))
+    .map((i) => ({
+      name: i.name,
+      type: cfgLabel(C.itemTypes ?? {}, i.type) || i.type,
+      qty: i.system?.quantity ?? 1,
+      weight: i.system?.weight?.value ?? i.system?.weight ?? "",
+      equipped: i.system?.equipped ? "●" : ""
+    }));
+
+  const currency = Object.entries(sys.currency ?? {})
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${v} ${cfgLabel(C.currencies, k) || k.toUpperCase()}`)
+    .join(" · ");
+
+  /* --- biografía enriquecida --- */
+  let biography = "";
+  try {
+    const TE = foundry.applications?.ux?.TextEditor?.implementation ?? globalThis.TextEditor;
+    biography = await TE.enrichHTML(sys.details?.biography?.value ?? "", {
+      secrets: actor.isOwner,
+      relativeTo: actor
+    });
+  } catch (e) {
+    biography = sys.details?.biography?.value ?? "";
+  }
+
+  return {
+    isNPC,
+    name: actor.name,
+    img: actor.img,
+    classes: classes.join(" / "),
+    level,
+    race,
+    background,
+    alignment: sys.details?.alignment ?? "",
+    cr: isNPC ? (sys.details?.cr ?? "") : "",
+    creatureType: isNPC ? cfgLabel(C.creatureTypes, sys.details?.type?.value) : "",
+    xp: sys.details?.xp?.value ?? "",
+    prof: fmtMod(attrs.prof),
+    ac: attrs.ac?.value ?? "",
+    hp: { value: attrs.hp?.value ?? 0, max: attrs.hp?.max ?? 0, temp: attrs.hp?.temp ?? 0 },
+    init: fmtMod(attrs.init?.total ?? attrs.init?.mod),
+    movement,
+    senses,
+    inspiration: !!attrs.inspiration,
+    abilities,
+    skills,
+    languages,
+    resist,
+    immune,
+    vuln,
+    condImmune,
+    attacks,
+    hasSpells: spellLevels.length > 0,
+    spellLevels,
+    pactSlots,
+    spellDC,
+    spellAttack: spellDC ? fmtMod(spellDC - 8) : "",
+    spellAbility,
+    features,
+    inventory,
+    currency,
+    biography,
+    exportDate: new Date().toLocaleDateString(game.i18n.lang || "es")
+  };
+}
