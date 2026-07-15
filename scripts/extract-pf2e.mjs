@@ -100,7 +100,8 @@ function statOf(stat) {
 function iwrList(entries) {
   return (entries ?? [])
     .map((e) => {
-      const base = e.label ?? cfgLabel(e.typeLabels, e.type) ?? e.type;
+      const raw = e.label ?? cfgLabel(e.typeLabels, e.type) ?? e.type;
+      const base = String(raw ?? "").replace(/^./, (c) => c.toUpperCase());
       return e.value ? `${base} ${e.value}` : base;
     })
     .filter(Boolean)
@@ -154,6 +155,14 @@ export async function extractActorData(actor) {
     initStat?.mod ?? initStat?.check?.mod ?? initStat?.statistic?.mod ?? perception?.mod?.replace("+", "")
   );
   const initLabel = loc(initStat?.statistic?.label ?? initStat?.label ?? "") || perception?.label || "";
+
+  // Los PNJ de pf2e no tienen rangos: el data model los deja en 0 y mostrarlos
+  // como "sin entrenar" es falso (un dragón con +24 en Atletismo "sin entrenar").
+  // La ficha nativa tampoco los muestra.
+  const stripRanks = (st) => {
+    if (st) { st.rank = null; st.rankLabel = ""; st.rankAbbr = ""; }
+    return st;
+  };
 
   const skills = Object.values(actor.skills ?? {})
     .map((sk) => statOf(sk))
@@ -217,7 +226,10 @@ export async function extractActorData(actor) {
       name: strike.label ?? strike.item?.name ?? "",
       glyph: GLYPH[1],                                  // un Golpe siempre cuesta una acción
       mod: fmtMod(strike.totalModifier),
-      variants: (strike.variants ?? []).map((v) => v.label).join(" / "),
+      // Los PNJ prefijan la variante con "Strike"; los PJ no. Se recorta hasta el signo.
+      variants: (strike.variants ?? [])
+        .map((v) => String(v.label ?? "").replace(/^[^+\-]*(?=[+-]\s*\d)/, "").trim())
+        .join(" / "),
       damage: damage || "—",
       traits: (strike.traits ?? []).map((t) => loc(t.label) || traitLabel(t.value ?? t)).join(", "),
       ready: strike.ready !== false
@@ -305,6 +317,8 @@ export async function extractActorData(actor) {
     const mapSpell = (s, prepared = null) => ({
       name: s.name,
       glyph: spellGlyph(s.system?.time),
+      // "10 minutes" es texto, no símbolo: el interletrado de los ◆ se lo comería
+      glyphIsText: !/^[◆◇↺–\s]+$/.test(spellGlyph(s.system?.time) || "◆"),
       range: loc(s.system?.range?.value) || "",
       defense: s.system?.defense?.save?.statistic
         ? `${s.system.defense.save.basic ? game.i18n.localize("GGSE.PF2E.Basic") + " " : ""}${cfgLabel(C.saves, s.system.defense.save.statistic)}`
@@ -437,10 +451,16 @@ export async function extractActorData(actor) {
     biography = isNPC ? (sys.details?.publicNotes ?? "") : (sys.details?.biography?.backstory ?? "");
   }
 
+  if (isNPC) {
+    [perception, ...saves, ...skills].forEach(stripRanks);
+    spellEntries.forEach((e) => { e.rankLabel = ""; });
+  }
+
   return {
     system: "pf2e",
     isPF2e: true,
     isNPC,
+    showRanks: !isNPC,
     name: actor.name,
     img: actor.img,
     level: sys.details?.level?.value ?? "",

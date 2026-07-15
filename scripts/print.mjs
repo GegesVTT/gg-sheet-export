@@ -45,7 +45,7 @@ function bodyPF2e(d) {
     <div class="combat-band">
       <span><b>${loc("GGSE.AC")}</b>${esc(d.ac)}</span>
       <span><b>${loc("GGSE.HP")}</b>${esc(d.hp.value)}/${esc(d.hp.max)}</span>
-      <span><b>${loc("GGSE.PF2E.Perception")}</b>${esc(d.perception?.mod)} <span class="rank">${esc(d.perception?.rankAbbr)}</span></span>
+      <span><b>${loc("GGSE.PF2E.Perception")}</b>${esc(d.perception?.mod)}${d.showRanks ? ` <span class="rank">${esc(d.perception?.rankAbbr)}</span>` : ""}</span>
       <span><b>${loc("GGSE.Initiative")}</b>${esc(d.init)}</span>
       ${d.movement ? `<span><b>${loc("GGSE.Speed")}</b>${esc(d.movement)}</span>` : ""}
       ${d.senses ? `<span><b>${loc("GGSE.Senses")}</b>${esc(d.senses)}</span>` : ""}
@@ -72,7 +72,7 @@ function bodyPF2e(d) {
       <div class="save-box">
         <div class="lbl">${esc(sv.label)}</div>
         <div class="val">${esc(sv.mod)}</div>
-        <div class="rk">${esc(sv.rankLabel)}</div>
+        ${sv.rankLabel ? `<div class="rk">${esc(sv.rankLabel)}</div>` : ""}
       </div>`).join("")}</div>
     ${d.savesNote ? `<p class="saves-note">${esc(d.savesNote)}</p>` : ""}
   </section>
@@ -81,9 +81,9 @@ function bodyPF2e(d) {
     <section>
       <h2>${loc("GGSE.Skills")}</h2>
       <table>${d.skills.map((sk) => `
-        <tr><td class="prof">${esc(sk.rankAbbr)}</td><td>${esc(sk.label)}</td>
+        <tr>${d.showRanks ? `<td class="prof">${esc(sk.rankAbbr)}</td>` : ""}<td>${esc(sk.label)}</td>
         <td class="dim">${esc(sk.ability)}</td><td class="num">${esc(sk.mod)}</td></tr>`).join("")}</table>
-      <p class="legend">${loc("GGSE.PF2E.LegendRanks")}</p>
+      ${d.showRanks ? `<p class="legend">${loc("GGSE.PF2E.LegendRanks")}</p>` : ""}
     </section>
     <div>
       ${traits.length ? `<section class="traits"><h2>${loc("GGSE.Traits")}</h2>
@@ -98,7 +98,7 @@ function bodyPF2e(d) {
   </div>
 
   ${d.actionGroups?.length ? `<section class="allow-break">
-    <h2>${loc("GGSE.PF2E.Actions")}</h2>
+    <h2>${loc("GGSE.PF2E.ActionsSection")}</h2>
     <div class="multicol">${d.actionGroups.map((g) => `
       <div class="block"><h4>${esc(g.label)}</h4>
       <ul class="plain">${g.rows.map((r) => `<li><span class="glyph">${r.glyph}</span> <strong>${esc(r.name)}</strong>${r.uses ? ` <span class="uses">${esc(r.uses)}</span>` : ""}${r.traits ? ` <span class="dim">· ${esc(r.traits)}</span>` : ""}</li>`).join("")}</ul></div>`).join("")}
@@ -118,11 +118,11 @@ function bodyPF2e(d) {
     <p class="legend">${loc("GGSE.PF2E.LegendSpells")}</p>
     ${d.spellEntries.map((e) => `
     <div class="entry">
-      <h3>${esc(e.name)} <span class="dim">· ${esc(e.tradition)} · ${esc(e.mode)} · ${esc(e.rankLabel)}</span></h3>
+      <h3>${esc(e.name)} <span class="dim">· ${esc(e.tradition)} · ${esc(e.mode)}${e.rankLabel ? ` · ${esc(e.rankLabel)}` : ""}</span></h3>
       <p class="entry-meta">${loc("GGSE.PF2E.SpellDC")}: <strong>${esc(e.dc)}</strong>${e.attack ? ` · ${loc("GGSE.PF2E.SpellAttack")}: <strong>${esc(e.attack)}</strong>` : ""}</p>
       <div class="multicol">${e.groups.map((g) => `
         <div class="block"><h4>${esc(g.label)}${g.slots ? ` — ${esc(g.slots)} <span class="bub">${g.bubbles}</span>` : ""}</h4>
-        <ul class="plain">${g.spells.map((sp) => `<li>${sp.prepared ? `<span class="bub">${sp.prepared}</span> ` : ""}<span class="glyph">${sp.glyph}</span> <strong>${esc(sp.name)}</strong>${sp.defense || sp.range ? ` <span class="dim">${esc([sp.defense, sp.range].filter(Boolean).join(" · "))}</span>` : ""}</li>`).join("")}</ul></div>`).join("")}
+        <ul class="plain">${g.spells.map((sp) => `<li>${sp.prepared ? `<span class="bub">${sp.prepared}</span> ` : ""}<span class="${sp.glyphIsText ? "glyph-txt" : "glyph"}">${sp.glyph}</span> <strong>${esc(sp.name)}</strong>${sp.defense || sp.range ? ` <span class="dim">${esc([sp.defense, sp.range].filter(Boolean).join(" · "))}</span>` : ""}</li>`).join("")}</ul></div>`).join("")}
       </div>
     </div>`).join("")}
   </section>` : ""}
@@ -276,6 +276,7 @@ export function buildPrintHTML(d) {
     display:flex; gap:14pt; align-items:flex-end; }
   header img { width:68pt; height:68pt; object-fit:cover; border:1.5pt solid var(--amber-b); border-radius:4pt; }
 
+  h2, h3, h4 { break-after:avoid; }
   h2 { font-size:12pt; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
     color:var(--wine); border-bottom:1pt solid var(--rule); padding-bottom:2pt; margin:12pt 0 6pt; }
   h3 { font-size:11pt; margin:6pt 0 3pt; }
@@ -332,6 +333,7 @@ export function buildPrintHTML(d) {
 
   /* ---- Pathfinder 2e ---- */
   .glyph { color:var(--amber); font-size:10pt; letter-spacing:-0.5pt; white-space:nowrap; }
+  .glyph-txt { color:var(--dim); font-size:9.5pt; font-style:italic; white-space:nowrap; }
   .rank { font-family:"Cinzel", Georgia, serif; font-size:7pt; letter-spacing:0.05em;
     color:var(--dim); text-transform:uppercase; }
   .saves3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:6pt; margin:8pt 0; }

@@ -90,5 +90,6 @@
   "GGSE.PF2E.SpellDC": "Spell DC",
   "GGSE.PF2E.SpellAttack": "Spell Attack",
   "GGSE.PF2E.LegendRanks": "U untrained · T trained · E expert · M master · L legendary",
-  "GGSE.PF2E.LegendSpells": "◆ action · ◆◆ two actions · ◆◆◆ three actions · ◇ free · ↺ reaction · ● available · ○ expended"
+  "GGSE.PF2E.LegendSpells": "◆ action · ◆◆ two actions · ◆◆◆ three actions · ◇ free · ↺ reaction · ● available · ○ expended",
+  "GGSE.PF2E.ActionsSection": "Actions & Reactions"
 }

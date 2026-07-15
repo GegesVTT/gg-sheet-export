@@ -38,7 +38,7 @@
   <section class="ggse-band">
     <span><b>{{localize "GGSE.AC"}}</b>{{ac}}</span>
     <span><b>{{localize "GGSE.HP"}}</b>{{hp.value}}/{{hp.max}}{{#if hp.temp}} (+{{hp.temp}}){{/if}}</span>
-    <span><b>{{localize "GGSE.PF2E.Perception"}}</b>{{perception.mod}} <span class="ggse-rank">{{perception.rankAbbr}}</span></span>
+    <span><b>{{localize "GGSE.PF2E.Perception"}}</b>{{perception.mod}}{{#if showRanks}} <span class="ggse-rank">{{perception.rankAbbr}}</span>{{/if}}</span>
     <span><b>{{localize "GGSE.Initiative"}}</b>{{init}}</span>
     {{#if movement}}<span><b>{{localize "GGSE.Speed"}}</b>{{movement}}</span>{{/if}}
     {{#if senses}}<span><b>{{localize "GGSE.Senses"}}</b>{{senses}}</span>{{/if}}
@@ -71,7 +71,7 @@
     <div class="ggse-save">
       <div class="ggse-save-label">{{label}}</div>
       <div class="ggse-save-mod">{{mod}}</div>
-      <div class="ggse-save-rank">{{rankLabel}}</div>
+      {{#if rankLabel}}<div class="ggse-save-rank">{{rankLabel}}</div>{{/if}}
     </div>
     {{/each}}
   </section>
@@ -83,7 +83,7 @@
       <table>
         {{#each skills}}
         <tr>
-          <td class="ggse-prof">{{rankAbbr}}</td>
+          {{#if ../showRanks}}<td class="ggse-prof">{{rankAbbr}}</td>{{/if}}
           <td>{{label}}</td>
           <td class="ggse-dim">{{ability}}</td>
           <td class="ggse-num">{{mod}}</td>
@@ -153,7 +153,7 @@
     <h2>{{localize "GGSE.Spells"}}</h2>
     {{#each spellEntries}}
     <div class="ggse-entry">
-      <h3>{{name}} <span class="ggse-dim">· {{tradition}} · {{mode}} · {{rankLabel}}</span></h3>
+      <h3>{{name}} <span class="ggse-dim">· {{tradition}} · {{mode}}{{#if rankLabel}} · {{rankLabel}}{{/if}}</span></h3>
       <p class="ggse-dim ggse-spellmeta">
         {{localize "GGSE.PF2E.SpellDC"}}: <strong>{{dc}}</strong>{{#if attack}} · {{localize "GGSE.PF2E.SpellAttack"}}: <strong>{{attack}}</strong>{{/if}}
       </p>
@@ -163,7 +163,7 @@
         <ul class="ggse-plain">
           {{#each spells}}
           <li>
-            {{#if prepared}}<span class="ggse-pips">{{prepared}}</span> {{/if}}<span class="ggse-glyph">{{glyph}}</span> <strong>{{name}}</strong>
+            {{#if prepared}}<span class="ggse-pips">{{prepared}}</span> {{/if}}<span class="{{#if glyphIsText}}ggse-dim{{else}}ggse-glyph{{/if}}">{{glyph}}</span> <strong>{{name}}</strong>
             <span class="ggse-dim">{{#if defense}}{{defense}}{{/if}}{{#if range}} · {{range}}{{/if}}</span>
           </li>
           {{/each}}

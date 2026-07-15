@@ -53,7 +53,7 @@ function pf2eToMarkdown(d) {
   L.push(`## ${loc("GGSE.Combat")}`);
   L.push(`- **${loc("GGSE.AC")}:** ${d.ac}`);
   L.push(`- **${loc("GGSE.HP")}:** ${d.hp.value}/${d.hp.max}${d.hp.temp ? ` (+${d.hp.temp} temp)` : ""}`);
-  L.push(`- **${loc("GGSE.PF2E.Perception")}:** ${d.perception?.mod} (${d.perception?.rankLabel})`);
+  L.push(`- **${loc("GGSE.PF2E.Perception")}:** ${d.perception?.mod}${d.perception?.rankLabel ? ` (${d.perception.rankLabel})` : ""}`);
   L.push(`- **${loc("GGSE.Initiative")}:** ${d.init}`);
   if (d.movement) L.push(`- **${loc("GGSE.Speed")}:** ${d.movement}`);
   if (d.senses) L.push(`- **${loc("GGSE.Senses")}:** ${d.senses}`);
@@ -70,18 +70,20 @@ function pf2eToMarkdown(d) {
 
   // Salvaciones
   L.push(`## ${loc("GGSE.PF2E.Saves")}`);
-  L.push(table(
-    [loc("GGSE.Save"), loc("GGSE.Bonus"), "CD", loc("GGSE.Proficiency")],
-    d.saves.map((s2) => [s2.label, s2.mod, String(s2.dc ?? ""), s2.rankLabel])
-  ));
+  L.push(d.showRanks
+    ? table([loc("GGSE.Save"), loc("GGSE.Bonus"), "CD", loc("GGSE.Proficiency")],
+        d.saves.map((s2) => [s2.label, s2.mod, String(s2.dc ?? ""), s2.rankLabel]))
+    : table([loc("GGSE.Save"), loc("GGSE.Bonus"), "CD"],
+        d.saves.map((s2) => [s2.label, s2.mod, String(s2.dc ?? "")])));
   if (d.savesNote) L.push(`*${d.savesNote}*`, "");
 
   // Habilidades
   L.push(`## ${loc("GGSE.Skills")}`);
-  L.push(table(
-    [loc("GGSE.Skill"), "", loc("GGSE.Bonus"), loc("GGSE.Proficiency")],
-    d.skills.map((s2) => [s2.label, s2.ability, s2.mod, s2.rankLabel])
-  ));
+  L.push(d.showRanks
+    ? table([loc("GGSE.Skill"), "", loc("GGSE.Bonus"), loc("GGSE.Proficiency")],
+        d.skills.map((s2) => [s2.label, s2.ability, s2.mod, s2.rankLabel]))
+    : table([loc("GGSE.Skill"), "", loc("GGSE.Bonus")],
+        d.skills.map((s2) => [s2.label, s2.ability, s2.mod])));
 
   // Rasgos defensivos
   const def = [];
@@ -105,7 +107,7 @@ function pf2eToMarkdown(d) {
     L.push(`## ${g.label}`);
     for (const r of g.rows) {
       const extra = [r.uses, r.traits].filter(Boolean).join(" · ");
-      L.push(`- ${r.glyph} **${r.name}**${extra ? ` — ${extra}` : ""}`);
+      L.push(`- ${r.glyph ? `${r.glyph} ` : ""}**${r.name}**${extra ? ` — ${extra}` : ""}`);
     }
     L.push("");
   }
@@ -129,7 +131,7 @@ function pf2eToMarkdown(d) {
       L.push(`### ${e.name}`);
       const meta = [`**${loc("GGSE.PF2E.Tradition")}:** ${e.tradition}`, `**${loc("GGSE.PF2E.SpellDC")}:** ${e.dc}`];
       if (e.attack) meta.push(`**${loc("GGSE.PF2E.SpellAttack")}:** ${e.attack}`);
-      meta.push(e.mode);
+      meta.push(e.rankLabel ? `${e.mode} · ${e.rankLabel}` : e.mode);
       L.push(`> ${meta.join(" · ")}`, "");
       for (const g of e.groups) {
         L.push(`#### ${g.label}${g.slots ? ` — ${g.slots} ${g.bubbles}` : ""}`);

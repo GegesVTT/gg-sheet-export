@@ -90,5 +90,6 @@
   "GGSE.PF2E.SpellDC": "CD de conjuros",
   "GGSE.PF2E.SpellAttack": "Ataque de conjuro",
   "GGSE.PF2E.LegendRanks": "U sin entrenar · T entrenado · E experto · M maestro · L legendario",
-  "GGSE.PF2E.LegendSpells": "◆ acción · ◆◆ dos acciones · ◆◆◆ tres acciones · ◇ libre · ↺ reacción · ● disponible · ○ gastado"
+  "GGSE.PF2E.LegendSpells": "◆ acción · ◆◆ dos acciones · ◆◆◆ tres acciones · ◇ libre · ↺ reacción · ● disponible · ○ gastado",
+  "GGSE.PF2E.ActionsSection": "Acciones y reacciones"
 }
