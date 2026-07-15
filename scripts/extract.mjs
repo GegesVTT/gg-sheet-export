@@ -154,6 +154,13 @@ export async function extractActorData(actor) {
     if (!formula || !formula.includes("@")) return formula;
     try {
       const rollData = item.getRollData?.() ?? actor.getRollData();
+      // dnd5e 5.x ya no define el alias "mod" en rollData: sin esto, una fórmula
+      // como "1 + @mod" (ataque sin armas) se resolvía a "1 + 0".
+      if (rollData && rollData.mod === undefined) {
+        const key = item.abilityMod ?? item.system?.ability;
+        const m = key ? actor.system?.abilities?.[key]?.mod : null;
+        if (typeof m === "number") rollData.mod = m;
+      }
       const RollCls = foundry.dice?.Roll ?? globalThis.Roll;
       return RollCls.replaceFormulaData(formula, rollData, { missing: "0" });
     } catch (e) {
@@ -161,24 +168,61 @@ export async function extractActorData(actor) {
     }
   }
 
+  /* Fuente de verdad del daño en dnd5e 4/5: la activity, no el ítem.
+     item.labels.damage trae solo el dado base ("1d6"); la activity trae lo que
+     muestra la ficha y lo que se tira de verdad ("1d6 + 3 Slashing"), incluidos
+     los dados extra de un arma mágica. Se prioriza la activity de tipo "attack". */
+  function activityLabels(w) {
+    const acts = w.system?.activities;
+    const list = acts?.contents ?? (Array.isArray(acts) ? acts : Object.values(acts ?? {}));
+    if (!list?.length) return { toHit: "", damage: "" };
+
+    const readDamage = (act) => {
+      const ld = act?.labels?.damage;
+      if (!ld) return "";
+      if (Array.isArray(ld)) {
+        // Cada entrada es una parte de daño: {formula, label, damageType}.
+        // Un arma con dado extra devuelve varias ("1d8 + 5" y "1d4 fire").
+        // Ojo: una activity puede traer el tipo con la fórmula VACÍA (ej. un
+        // ataque sin armas mal configurado) y su label sería solo " Bludgeoning".
+        // Sin fórmula no hay daño: se descarta y se cae al ítem.
+        return ld.map((p) => (p?.formula ? (p.label || p.formula) : "")).filter(Boolean).join(" + ");
+      }
+      return typeof ld === "string" ? ld.trim() : "";
+    };
+
+    // Las armas suelen tener varias activities (attack, save, utility).
+    // La que interesa es la de ataque; el resto solo si aquella vino vacía.
+    const attacks = list.filter((a) => a?.type === "attack");
+    for (const group of [attacks, list]) {
+      for (const act of group) {
+        const damage = readDamage(act);
+        if (damage) return { toHit: act?.labels?.toHit ?? "", damage };
+      }
+    }
+    return { toHit: attacks[0]?.labels?.toHit ?? "", damage: "" };
+  }
+
   const attacks = actor.items
     .filter((i) => i.type === "weapon")
     .map((w) => {
-      let toHit = w.labels?.toHit ?? "";
-      let damage = w.labels?.damage ?? "";
-      if (!damage && Array.isArray(w.labels?.derivedDamage)) {
-        damage = w.labels.derivedDamage.map((d) => `${d.formula} ${d.damageType ?? ""}`.trim()).join(" + ");
+      // La activity manda: el ítem miente por omisión (da el dado sin el modificador).
+      let toHit = "";
+      let damage = "";
+      try {
+        const fromActivity = activityLabels(w);
+        toHit = fromActivity.toHit;
+        damage = fromActivity.damage;
+      } catch (e) { /* estructura distinta según versión: caemos al ítem */ }
+
+      toHit ||= w.labels?.toHit ?? "";
+      if (!damage) {
+        damage = w.labels?.damage ?? "";
+        if (!damage && Array.isArray(w.labels?.derivedDamage)) {
+          damage = w.labels.derivedDamage.map((d) => `${d.formula} ${d.damageType ?? ""}`.trim()).join(" + ");
+        }
+        damage = resolveFormula(damage, w);
       }
-      // dnd5e 4+: buscar en activities si labels quedó vacío
-      if ((!toHit || !damage) && w.system?.activities) {
-        try {
-          for (const act of w.system.activities) {
-            toHit ||= act.labels?.toHit ?? "";
-            damage ||= act.labels?.damage ?? "";
-          }
-        } catch (e) { /* estructura distinta según versión: seguimos */ }
-      }
-      damage = resolveFormula(damage, w);
       return {
         name: w.name,
         equipped: w.system?.equipped ? "●" : "○",
@@ -264,28 +308,81 @@ export async function extractActorData(actor) {
     g.feats.push({ name: item.name, uses: uses?.max ? `${uses.value ?? 0}/${uses.max}` : "" });
   }
 
-  /* --- inventario agrupado por categoría, equipados primero --- */
+  /* --- inventario ---
+     Los ítems guardados dentro de un contenedor llevan system.container con el id
+     del contenedor. Antes se ignoraba: una poción dentro de la bolsa de contención
+     se listaba igual que una en el cinturón, y el contenedor salía como una línea
+     suelta sin contenido. Ahora lo suelto va agrupado por categoría y cada
+     contenedor arma su propio bloque. */
   const INV_TYPES = ["weapon", "equipment", "consumable", "tool", "loot", "container"];
   const CAT_KEYS = { weapon: "GGSE.CatWeapons", equipment: "GGSE.CatEquipment", consumable: "GGSE.CatConsumables",
     tool: "GGSE.CatTools", container: "GGSE.CatContainers", loot: "GGSE.CatLoot" };
-  const inventory = actor.items
-    .filter((i) => INV_TYPES.includes(i.type))
-    .map((i) => ({
-      name: i.name,
-      type: i.type,
-      qty: i.system?.quantity ?? 1,
-      weight: i.system?.weight?.value ?? (typeof i.system?.weight === "number" ? i.system.weight : "") ?? "",
-      equipped: i.system?.equipped ? "●" : ""
-    }));
+
+  const invItems = actor.items.filter((i) => INV_TYPES.includes(i.type));
+  const containerOf = (i) => i.system?.container ?? null;
+
+  const toRow = (i) => ({
+    name: i.name,
+    type: i.type,
+    qty: i.system?.quantity ?? 1,
+    weight: i.system?.weight?.value ?? (typeof i.system?.weight === "number" ? i.system.weight : "") ?? "",
+    equipped: i.system?.equipped ? "●" : ""
+  });
+  const byEquippedThenName = (a, b) =>
+    a.equipped === b.equipped ? a.name.localeCompare(b.name, game.i18n.lang) : a.equipped ? -1 : 1;
+
+  // Suelto = no está dentro de ningún contenedor. Los contenedores tienen bloque propio.
+  // Lista plana, por compatibilidad: el Markdown y cualquier consumidor viejo la usan.
+  const inventory = invItems.map(toRow);
+
+  const loose = invItems.filter((i) => !containerOf(i) && i.type !== "container");
   const invGroups = INV_TYPES
+    .filter((t) => t !== "container")
     .map((t) => ({
       label: loc(CAT_KEYS[t]),
-      rows: inventory
-        .filter((i) => i.type === t)
-        .sort((a, b) => (a.equipped === b.equipped ? a.name.localeCompare(b.name, game.i18n.lang) : a.equipped ? -1 : 1))
+      rows: loose.filter((i) => i.type === t).map(toRow).sort(byEquippedThenName)
     }))
     .filter((g) => g.rows.length);
-  const totalWeight = inventory.reduce((n, i) => n + (Number(i.weight) || 0) * (i.qty ?? 1), 0);
+
+  // Un bloque por contenedor, con su contenido adentro.
+  const containerGroups = [];
+  for (const c of invItems.filter((i) => i.type === "container")) {
+    const rows = invItems.filter((i) => containerOf(i) === c.id).map(toRow).sort(byEquippedThenName);
+    // La bolsa de contención marca su contenido como sin peso: el sistema lo sabe
+    // vía properties, y hay que decirlo o el peso listado no cierra con el total.
+    const props = c.system?.properties;
+    const weightless = props ? (props.has?.("weightlessContents") ?? [...props].includes("weightlessContents")) : false;
+    let contentsWeight = null;
+    try { contentsWeight = await c.system?.contentsWeight ?? null; } catch { /* según versión */ }
+    const cap = c.system?.capacity?.weight?.value ?? null;
+    containerGroups.push({
+      name: c.name,
+      weight: c.system?.weight?.value ?? "",
+      capacity: cap,
+      contentsWeight: typeof contentsWeight === "number" ? Math.round(contentsWeight * 100) / 100 : null,
+      weightless,
+      parent: containerOf(c) ? (invItems.find((x) => x.id === containerOf(c))?.name ?? "") : "",
+      rows
+    });
+  }
+  containerGroups.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
+
+  /* El peso total lo calcula el sistema: incluye las monedas (0.02 lb c/u) y excluye
+     el contenido de los contenedores sin peso. Sumarlo a mano daba mal por los dos
+     lados a la vez. Se deja la suma manual solo como respaldo. */
+  const enc = sys.attributes?.encumbrance;
+  const manualWeight = invItems.reduce(
+    (n, i) => n + (Number(i.system?.weight?.value) || 0) * (i.system?.quantity ?? 1), 0);
+  const totalWeight = typeof enc?.value === "number" ? enc.value : manualWeight;
+  const encumbrance = enc?.thresholds
+    ? {
+        value: enc.value,
+        encumbered: enc.thresholds.encumbered ?? null,
+        heavy: enc.thresholds.heavilyEncumbered ?? null,
+        max: enc.thresholds.maximum ?? null,
+        pct: enc.max ? Math.round((enc.value / enc.max) * 100) : null
+      }
+    : null;
 
   const currency = Object.entries(sys.currency ?? {})
     .filter(([, v]) => v > 0)
@@ -337,7 +434,9 @@ export async function extractActorData(actor) {
     skills,
     featureGroups,
     invGroups,
+    containerGroups,
     totalWeight,
+    encumbrance,
     languages,
     resist,
     immune,

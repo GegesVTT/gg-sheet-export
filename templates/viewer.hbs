@@ -316,7 +316,32 @@
       </tr>
       {{/each}}
     </table>
-    {{#if currency}}<p class="ggse-currency"><strong>{{localize "GGSE.Currency"}}:</strong> {{currency}}</p>{{/if}}
+    {{#if currency}}<p class="ggse-currency"><strong>{{localize "GGSE.Currency"}}:</strong> {{currency}}{{#if totalWeight}} · <strong>{{localize "GGSE.TotalWeight"}}:</strong> {{totalWeight}} lb{{/if}}</p>{{/if}}
+  </section>
+  {{/if}}
+
+  {{#if containerGroups.length}}
+  <section>
+    <h2>{{localize "GGSE.CatContainers"}}</h2>
+    {{#each containerGroups}}
+    <div class="ggse-entry">
+      <h3>{{name}} <span class="ggse-dim">{{#if parent}}· {{localize "GGSE.InsideOf"}} {{parent}} {{/if}}{{#if contentsWeight}}· {{contentsWeight}} lb{{#if capacity}} / {{capacity}}{{/if}} {{/if}}{{#if weightless}}· {{localize "GGSE.Weightless"}}{{/if}}</span></h3>
+      {{#if rows.length}}
+      <table>
+        {{#each rows}}
+        <tr>
+          <td class="ggse-prof">{{equipped}}</td>
+          <td>{{name}}</td>
+          <td class="ggse-num">{{#if qty}}×{{qty}}{{/if}}</td>
+          <td class="ggse-num ggse-dim">{{weight}}</td>
+        </tr>
+        {{/each}}
+      </table>
+      {{else}}
+      <p class="ggse-dim">{{localize "GGSE.EmptyContainer"}}</p>
+      {{/if}}
+    </div>
+    {{/each}}
   </section>
   {{/if}}
 

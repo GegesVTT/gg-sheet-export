@@ -248,7 +248,28 @@ function body5e(d) {
     <p class="inv-total">
       ${d.currency ? `<strong>${loc("GGSE.Currency")}:</strong> ${esc(d.currency)}` : ""}
       ${d.totalWeight ? ` · <strong>${loc("GGSE.TotalWeight")}:</strong> ${esc(Math.round(d.totalWeight * 100) / 100)} lb` : ""}
+      ${d.encumbrance?.encumbered ? ` <span class="dim">(${loc("GGSE.Encumbered")} ${esc(d.encumbrance.encumbered)} · ${loc("GGSE.Max")} ${esc(d.encumbrance.max)})</span>` : ""}
     </p>
+  </section>` : ""}
+
+  ${d.containerGroups?.length ? `<section class="allow-break">
+    <h2>${loc("GGSE.CatContainers")}</h2>
+    ${d.containerGroups.map((c) => `
+    <div class="container-block" style="break-inside:auto">
+      <h4>${esc(c.name)}
+        <span class="dim">${[
+          c.parent ? `${loc("GGSE.InsideOf")} ${esc(c.parent)}` : "",
+          c.contentsWeight !== null ? `${esc(c.contentsWeight)} lb${c.capacity ? ` / ${esc(c.capacity)}` : ""}` : "",
+          c.weightless ? loc("GGSE.Weightless") : ""
+        ].filter(Boolean).join(" · ")}</span>
+      </h4>
+      ${c.rows.length ? `<table>
+        <thead><tr><td></td><td>${loc("GGSE.Item")}</td><td class="num">${loc("GGSE.Qty")}</td><td class="num">${loc("GGSE.Weight")}</td></tr></thead>
+        ${c.rows.map((i) => `
+        <tr><td class="prof">${i.equipped}</td><td>${esc(i.name)}</td>
+        <td class="num">${esc(i.qty)}</td><td class="num">${esc(i.weight)}</td></tr>`).join("")}
+      </table>` : `<p class="dim">${loc("GGSE.EmptyContainer")}</p>`}
+    </div>`).join("")}
   </section>` : ""}
 
 `;
@@ -326,6 +347,8 @@ export function buildPrintHTML(d) {
   .bio a { color:inherit; text-decoration:none; border-bottom:0.5pt dotted var(--dim); }
   .bio i[class^="fa"], .bio i[class*=" fa"] { display:none; }
   .inv-total { margin-top:5pt; font-size:11pt; }
+  .container-block { border-left:1.5pt solid var(--rule); padding-left:7pt; margin-bottom:6pt; }
+  .container-block h4 { margin-bottom:2pt; }
 
   .print-footer { position:fixed; bottom:0; left:0; right:0; text-align:center;
     font-size:8.5pt; color:var(--dim); font-style:italic;

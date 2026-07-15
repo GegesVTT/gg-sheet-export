@@ -257,14 +257,34 @@ export function actorToMarkdown(d) {
     L.push("");
   }
 
-  // Inventario
-  if (d.inventory.length) {
+  // Inventario: lo suelto por categoría, y un bloque por contenedor
+  if (d.invGroups?.length || d.containerGroups?.length) {
     L.push(`## ${loc("GGSE.Inventory")}`);
-    L.push(table(
-      ["", loc("GGSE.Item"), loc("GGSE.Qty"), loc("GGSE.Weight")],
-      d.inventory.map((i) => [i.equipped, i.name, String(i.qty), String(i.weight)])
-    ));
-    if (d.currency) L.push(`**${loc("GGSE.Currency")}:** ${d.currency}`, "");
+    for (const g of d.invGroups ?? []) {
+      L.push(`### ${g.label}`);
+      L.push(table(
+        ["", loc("GGSE.Item"), loc("GGSE.Qty"), loc("GGSE.Weight")],
+        g.rows.map((i) => [i.equipped, i.name, String(i.qty), String(i.weight)])
+      ));
+    }
+    for (const c of d.containerGroups ?? []) {
+      const meta = [];
+      if (c.parent) meta.push(`${loc("GGSE.InsideOf")} ${c.parent}`);
+      if (c.contentsWeight !== null && c.contentsWeight !== undefined) {
+        meta.push(`${c.contentsWeight} lb${c.capacity ? ` / ${c.capacity}` : ""}`);
+      }
+      if (c.weightless) meta.push(`*${loc("GGSE.Weightless")}*`);
+      L.push(`### ${c.name}${meta.length ? ` — ${meta.join(" · ")}` : ""}`);
+      if (!c.rows.length) { L.push(`*${loc("GGSE.EmptyContainer")}*`, ""); continue; }
+      L.push(table(
+        ["", loc("GGSE.Item"), loc("GGSE.Qty"), loc("GGSE.Weight")],
+        c.rows.map((i) => [i.equipped, i.name, String(i.qty), String(i.weight)])
+      ));
+    }
+    const tot = [];
+    if (d.currency) tot.push(`**${loc("GGSE.Currency")}:** ${d.currency}`);
+    if (d.totalWeight) tot.push(`**${loc("GGSE.TotalWeight")}:** ${Math.round(d.totalWeight * 100) / 100} lb`);
+    if (tot.length) L.push(tot.join(" · "), "");
   }
 
   // Biografía
