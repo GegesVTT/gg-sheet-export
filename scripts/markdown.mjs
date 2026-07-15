@@ -15,6 +15,7 @@ function htmlToMd(html) {
     .replace(/<h1[^>]*>/gi, "## ")
     .replace(/<h2[^>]*>/gi, "### ")
     .replace(/<h3[^>]*>/gi, "#### ")
+    .replace(/<h[456][^>]*>/gi, "##### ")
     .replace(/<li[^>]*>/gi, "- ")
     .replace(/<\/li>/gi, "\n")
     .replace(/<(strong|b)[^>]*>/gi, "**")

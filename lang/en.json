@@ -3,7 +3,7 @@
   "GGSE.ViewerTitle": "Reading view",
   "GGSE.ExportPdf": "Export PDF",
   "GGSE.ExportMd": "Export Markdown",
-  "GGSE.PopupBlocked": "The browser blocked the print window. Allow pop-ups for Foundry and try again.",
+  "GGSE.PopupBlocked": "Could not open the print dialog. If you're using the Foundry desktop app, try from a browser (Chrome/Edge); in a browser, allow pop-ups for your Foundry domain.",
   "GGSE.MdSaved": "Markdown for {name} downloaded.",
   "GGSE.Combat": "Combat",
   "GGSE.AC": "AC",

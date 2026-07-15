@@ -65,23 +65,39 @@ export async function extractActorData(actor) {
   const isNPC = actor.type === "npc";
 
   /* --- identidad --- */
-  const classes = actor.items
+  // Subclases: usamos el getter class.subclass del sistema dnd5e cuando existe
+  // (enlaza por classIdentifier de forma canónica). Fallback manual: solo match
+  // EXACTO de identifier, sin reutilizar subclases ya asignadas a otra clase.
+  // Antes, una subclase sin classIdentifier se enganchaba a cualquier clase
+  // (bug reportado: multiclase Wizard/Rogue mostraba "Rogue (Bladesong)").
+  // Único caso donde toleramos identifier vacío: una sola clase + una sola
+  // subclase (homebrew/traducciones que no completan el campo).
+  const classItems = actor.items
     .filter((i) => i.type === "class")
-    .map((c) => {
-      const sub = actor.items.find(
-        (s) => s.type === "subclass" && (s.system?.classIdentifier === c.system?.identifier || !s.system?.classIdentifier)
-      );
-      return `${c.name}${sub ? ` (${sub.name})` : ""} ${c.system?.levels ?? ""}`.trim();
-    });
+    .sort((a, b) => (b.system?.levels ?? 0) - (a.system?.levels ?? 0));
+  const subclassItems = actor.items.filter((i) => i.type === "subclass");
+  const usedSubIds = new Set();
+  const classes = classItems.map((c) => {
+    let sub = null;
+    try { sub = c.subclass ?? null; } catch (e) { /* getter ausente en dnd5e viejos */ }
+    if (!sub) {
+      sub = subclassItems.find(
+        (s) => !usedSubIds.has(s.id) && s.system?.classIdentifier && s.system.classIdentifier === c.system?.identifier
+      ) ?? null;
+    }
+    if (!sub && classItems.length === 1 && subclassItems.length === 1 && !subclassItems[0].system?.classIdentifier) {
+      sub = subclassItems[0];
+    }
+    if (sub) usedSubIds.add(sub.id);
+    return `${c.name}${sub ? ` (${sub.name})` : ""} ${c.system?.levels ?? ""}`.trim();
+  });
 
   const raceItem = actor.items.find((i) => i.type === "race");
   const bgItem = actor.items.find((i) => i.type === "background");
   const race = raceItem?.name ?? (typeof sys.details?.race === "string" ? sys.details.race : "");
   const background = bgItem?.name ?? (typeof sys.details?.background === "string" ? sys.details.background : "");
 
-  const level = sys.details?.level ?? actor.items
-    .filter((i) => i.type === "class")
-    .reduce((n, c) => n + (c.system?.levels ?? 0), 0);
+  const level = sys.details?.level ?? classItems.reduce((n, c) => n + (c.system?.levels ?? 0), 0);
 
   /* --- atributos --- */
   const abilities = Object.entries(sys.abilities ?? {}).map(([key, ab]) => {
@@ -239,7 +255,6 @@ export async function extractActorData(actor) {
   const ORIGIN_KEYS = { race: "GGSE.OriginRace", class: "GGSE.OriginClass", subclass: "GGSE.OriginClass",
     background: "GGSE.OriginBackground", feat: "GGSE.OriginFeat" };
   const featureGroups = [];
-  for (const f of features) { f._origin = null; }
   for (const item of actor.items.filter((i) => i.type === "feat")) {
     const key = ORIGIN_KEYS[item.system?.type?.value] ?? "GGSE.OriginOther";
     const label = loc(key);
@@ -259,7 +274,7 @@ export async function extractActorData(actor) {
       name: i.name,
       type: i.type,
       qty: i.system?.quantity ?? 1,
-      weight: i.system?.weight?.value || "",
+      weight: i.system?.weight?.value ?? (typeof i.system?.weight === "number" ? i.system.weight : "") ?? "",
       equipped: i.system?.equipped ? "●" : ""
     }));
   const invGroups = INV_TYPES

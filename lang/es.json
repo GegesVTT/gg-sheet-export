@@ -3,7 +3,7 @@
   "GGSE.ViewerTitle": "Vista de lectura",
   "GGSE.ExportPdf": "Exportar PDF",
   "GGSE.ExportMd": "Exportar Markdown",
-  "GGSE.PopupBlocked": "El navegador bloqueó la ventana de impresión. Permití ventanas emergentes para Foundry e intentá de nuevo.",
+  "GGSE.PopupBlocked": "No se pudo abrir el diálogo de impresión. Si estás en la app de Foundry, probá desde un navegador (Chrome/Edge); en un navegador, permití ventanas emergentes para tu dominio de Foundry.",
   "GGSE.MdSaved": "Markdown de {name} descargado.",
   "GGSE.Combat": "Combate",
   "GGSE.AC": "CA",

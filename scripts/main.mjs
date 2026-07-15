@@ -16,6 +16,29 @@ const SUPPORTED_TYPES = ["character", "npc"];
 async function exportPdf(actor) {
   const data = await extractActorData(actor);
   const html = buildPrintHTML(data);
+
+  // Impresión vía iframe oculto: el diálogo de imprimir se abre sobre la misma
+  // ventana de Foundry, sin depender de ventanas emergentes — que la app nativa
+  // (Electron) y varios navegadores bloquean por defecto (bug reportado en v1.2.x).
+  // El documento de imprenta se auto-imprime al cargar (script embebido en print.mjs).
+  try {
+    document.getElementById("ggse-print-frame")?.remove();
+    const frame = document.createElement("iframe");
+    frame.id = "ggse-print-frame";
+    frame.style.cssText = "position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden;";
+    frame.srcdoc = html;
+    frame.addEventListener("load", () => {
+      try {
+        frame.contentWindow.addEventListener("afterprint", () => frame.remove());
+      } catch (e) { /* sin cleanup inmediato: el frame se recicla en el próximo export */ }
+    });
+    document.body.appendChild(frame);
+    return;
+  } catch (e) {
+    console.warn(`${MODULE_ID} | Falló la impresión por iframe, probando ventana emergente`, e);
+  }
+
+  // Fallback: ventana emergente (comportamiento previo a v1.2.4).
   const win = window.open("", "_blank");
   if (!win) {
     ui.notifications.warn(game.i18n.localize("GGSE.PopupBlocked"));
@@ -111,6 +134,12 @@ Hooks.on("renderApplicationV2", (app, element) => {
   const actor = app.document;
   if (!(actor instanceof Actor) || !SUPPORTED_TYPES.includes(actor.type)) return;
   if (app instanceof GGSheetViewer) return;
+  // Solo hojas de actor reales: sin este guard, el botón aparecía también en los
+  // diálogos de configuración de dnd5e (habilidades, movimiento, etc.), que son
+  // AppV2 con el actor como document. Si la clase no existe, degradamos al
+  // comportamiento previo.
+  const ActorSheetV2 = foundry.applications?.sheets?.ActorSheetV2;
+  if (ActorSheetV2 && !(app instanceof ActorSheetV2)) return;
 
   const header = element.querySelector(".window-header");
   if (!header || header.querySelector(".ggse-header-btn")) return;

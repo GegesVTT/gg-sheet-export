@@ -97,6 +97,9 @@ export function buildPrintHTML(d) {
   .legend { font-size:9pt; color:var(--dim); margin-top:3pt; }
   .bio p { margin:4pt 0; text-align:justify; hyphens:auto; }
   .bio img { max-width:100%; }
+  /* Content-links de Foundry en la biografía: en papel no hay click ni FontAwesome */
+  .bio a { color:inherit; text-decoration:none; border-bottom:0.5pt dotted var(--dim); }
+  .bio i[class^="fa"], .bio i[class*=" fa"] { display:none; }
   .inv-total { margin-top:5pt; font-size:11pt; }
 
   .print-footer { position:fixed; bottom:0; left:0; right:0; text-align:center;
@@ -208,7 +211,20 @@ export function buildPrintHTML(d) {
   </section>` : ""}
 </div>
 <script>
-  window.addEventListener("load", () => setTimeout(() => window.print(), 450));
+  // Espera a que carguen las fuentes web y las imágenes (con tope de 2.5s)
+  // antes de abrir el diálogo de impresión, para que el PDF salga siempre con
+  // la tipografía correcta y el retrato del personaje. Funciona igual dentro
+  // del iframe oculto (v1.2.4+) que en la ventana emergente de fallback.
+  window.addEventListener("load", () => {
+    const imgs = Array.from(document.images)
+      .filter((i) => !i.complete)
+      .map((i) => new Promise((res) => { i.onload = i.onerror = res; }));
+    const fonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    const timeout = new Promise((res) => setTimeout(res, 2500));
+    Promise.race([Promise.all([fonts, ...imgs]), timeout]).then(() => {
+      setTimeout(() => { window.focus(); window.print(); }, 60);
+    });
+  });
 </script>
 </body>
 </html>`;
