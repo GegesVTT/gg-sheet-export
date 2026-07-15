@@ -203,6 +203,7 @@ Hooks.once("init", () => {
     mod.api = {
       open: openViewer,
       exportPdf,
+      exportHtml,
       exportMarkdown
     };
   }
