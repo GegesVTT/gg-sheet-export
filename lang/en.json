@@ -96,5 +96,8 @@
   "GGSE.Weightless": "contents weigh nothing",
   "GGSE.EmptyContainer": "empty",
   "GGSE.Encumbered": "encumbered at",
-  "GGSE.Max": "max"
+  "GGSE.Max": "max",
+  "GGSE.ExportHtml": "HTML",
+  "GGSE.HtmlSaved": "HTML sheet for {name} saved.",
+  "GGSE.HtmlHint": "The ? circles expand the description of each feature, spell or item. When you print this file, descriptions are hidden and you get the compact sheet."
 }

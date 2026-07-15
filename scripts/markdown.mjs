@@ -247,8 +247,19 @@ export function actorToMarkdown(d) {
     }
   }
 
-  // Rasgos y dotes
-  if (d.features.length) {
+  // Rasgos y dotes: agrupados por origen, igual que en el PDF.
+  // (Antes salían planos acá y agrupados allá: mismos datos, dos organizaciones.)
+  if (d.featureGroups?.length) {
+    L.push(`## ${loc("GGSE.Features")}`);
+    for (const g of d.featureGroups) {
+      L.push(`### ${g.label}`);
+      for (const f of g.rows ?? g.feats ?? []) {
+        const extra = [f.subtitle, f.uses ? `${loc("GGSE.Uses")}: ${f.uses}` : ""].filter(Boolean).join(" · ");
+        L.push(`- **${f.name}**${extra ? ` — ${extra}` : ""}`);
+      }
+      L.push("");
+    }
+  } else if (d.features?.length) {
     L.push(`## ${loc("GGSE.Features")}`);
     for (const f of d.features) {
       const extra = [f.subtitle, f.uses ? `${loc("GGSE.Uses")}: ${f.uses}` : ""].filter(Boolean).join(" · ");
@@ -283,7 +294,12 @@ export function actorToMarkdown(d) {
     }
     const tot = [];
     if (d.currency) tot.push(`**${loc("GGSE.Currency")}:** ${d.currency}`);
-    if (d.totalWeight) tot.push(`**${loc("GGSE.TotalWeight")}:** ${Math.round(d.totalWeight * 100) / 100} lb`);
+    if (d.totalWeight) {
+      const umbral = d.encumbrance?.encumbered
+        ? ` (${loc("GGSE.Encumbered")} ${d.encumbrance.encumbered} · ${loc("GGSE.Max")} ${d.encumbrance.max})`
+        : "";
+      tot.push(`**${loc("GGSE.TotalWeight")}:** ${Math.round(d.totalWeight * 100) / 100} lb${umbral}`);
+    }
     if (tot.length) L.push(tot.join(" · "), "");
   }
 

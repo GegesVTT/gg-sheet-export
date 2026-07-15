@@ -59,6 +59,37 @@ function profMarker(p) {
 
 /* ---------- extracción principal ---------- */
 
+
+/* ---------- descripciones ----------
+   Solo las consume la exportación HTML: el PDF y el Markdown las ignoran.
+   Dos problemas que hay que resolver antes de meterlas en un archivo suelto:
+   1. Los @UUID enriquecen a <a data-uuid> que SOLO funcionan dentro de Foundry;
+      afuera son texto subrayado que no lleva a ningún lado. Se aplanan.
+   2. Las <img> apuntan a rutas del servidor de Foundry y se verían rotas.
+   Se conservan tablas, listas y negritas, que es donde está la información. */
+function sanitizeDescription(html) {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  div.querySelectorAll("script, style, img, video, audio").forEach((el) => el.remove());
+  // Enlaces (content-link, inline-roll, externos): queda el texto, se va el enlace.
+  div.querySelectorAll("a").forEach((a) => a.replaceWith(document.createTextNode(a.textContent ?? "")));
+  // Iconos sueltos de FontAwesome sin texto
+  div.querySelectorAll("i, span.fa, .fas, .fa-solid").forEach((el) => {
+    if (!(el.textContent ?? "").trim()) el.remove();
+  });
+  // Atributos peligrosos o inútiles fuera de Foundry
+  div.querySelectorAll("*").forEach((el) => {
+    for (const attr of [...el.attributes]) {
+      if (attr.name.startsWith("on") || attr.name.startsWith("data-") || attr.name === "style") {
+        el.removeAttribute(attr.name);
+      }
+    }
+  });
+  return div.innerHTML.trim();
+}
+
 export async function extractActorData(actor) {
   const sys = actor.system ?? {};
   const C = CONFIG.DND5E ?? {};
@@ -213,8 +244,12 @@ export async function extractActorData(actor) {
     return { toHit: attacks[0]?.labels?.toHit ?? "", damage: "" };
   }
 
-  const attacks = actor.items
-    .filter((i) => i.type === "weapon")
+  // Las descripciones se resuelven antes: el .map de abajo es síncrono.
+  const armas = actor.items.filter((i) => i.type === "weapon");
+  const descripcionesDeArmas = new Map(
+    await Promise.all(armas.map(async (w) => [w.id, await describe(w)]))
+  );
+  const attacks = armas
     .map((w) => {
       // La activity manda: el ítem miente por omisión (da el dado sin el modificador).
       let toHit = "";
@@ -238,7 +273,8 @@ export async function extractActorData(actor) {
         equipped: w.system?.equipped ? "●" : "○",
         toHit: toHit || "—",
         damage: damage || "—",
-        props: w.labels?.properties?.map?.((p) => p.label ?? p).join(", ") ?? ""
+        props: w.labels?.properties?.map?.((p) => p.label ?? p).join(", ") ?? "",
+        description: descripcionesDeArmas.get(w.id) ?? ""
       };
     })
     .sort((a, b) => (a.equipped === b.equipped ? 0 : a.equipped === "●" ? -1 : 1));
@@ -247,9 +283,9 @@ export async function extractActorData(actor) {
   const spellItems = actor.items.filter((i) => i.type === "spell");
   const spellLevels = [];
   for (let lvl = 0; lvl <= 9; lvl++) {
-    const spells = spellItems
+    const spells = (await Promise.all(spellItems
       .filter((s) => (s.system?.level ?? 0) === lvl)
-      .map((s) => {
+      .map(async (s) => {
         // dnd5e 5.1+: system.method + system.prepared. Fallback a la API vieja (preparation.mode/prepared).
         const sd = s.system ?? {};
         let method, isPrepared;
@@ -271,9 +307,10 @@ export async function extractActorData(actor) {
           prepared: usesPrep ? (isPrepared ? "●" : "○") : "●",
           mode: method && !usesPrep ? cfgLabel(modeMap, method) : "",
           conc: props.includes("concentration") ? "C" : "",
-          ritual: props.includes("ritual") ? "R" : ""
+          ritual: props.includes("ritual") ? "R" : "",
+          description: await describe(s)
         };
-      })
+      })))
       .sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
     if (spells.length) {
       const slot = sys.spells?.[`spell${lvl}`];
@@ -292,6 +329,17 @@ export async function extractActorData(actor) {
   const pactSlots = pact?.max ? `${pact.value ?? 0}/${pact.max} (${loc("GGSE.Level")} ${pact.level ?? "?"})` : "";
   const spellDC = attrs.spelldc ?? sys.attributes?.spell?.dc ?? null;
   const spellAbility = cfgLabel(C.abilities, attrs.spellcasting ?? sys.attributes?.spellcasting);
+
+  const TEditor = foundry.applications?.ux?.TextEditor?.implementation ?? globalThis.TextEditor;
+  async function describe(item) {
+    const raw = item.system?.description?.value ?? "";
+    if (!raw) return "";
+    try {
+      return sanitizeDescription(await TEditor.enrichHTML(raw, { secrets: false, relativeTo: item }));
+    } catch (e) {
+      return sanitizeDescription(raw);
+    }
+  }
 
   /* --- rasgos y dotes --- */
   const features = actor.items
@@ -315,7 +363,15 @@ export async function extractActorData(actor) {
     let g = featureGroups.find((x) => x.label === label);
     if (!g) featureGroups.push(g = { label, feats: [] });
     const uses = item.system?.uses;
-    g.feats.push({ name: item.name, uses: uses?.max ? `${uses.value ?? 0}/${uses.max}` : "" });
+    // El subtítulo ("Fighting Style", "Channel Divinity", "Blessing") NO es redundante
+    // con el grupo: Defensa cae en "Clase" pero su subtítulo dice "Fighting Style".
+    // El PDF lo venía perdiendo por no guardarlo acá.
+    g.feats.push({
+      name: item.name,
+      subtitle: item.system?.type?.label ?? cfgLabel(C.featureTypes, item.system?.type?.value) ?? "",
+      uses: uses?.max ? `${uses.value ?? 0}/${uses.max}` : "",
+      description: await describe(item)
+    });
   }
 
   /* --- inventario ---
@@ -331,33 +387,36 @@ export async function extractActorData(actor) {
   const invItems = actor.items.filter((i) => INV_TYPES.includes(i.type));
   const containerOf = (i) => i.system?.container ?? null;
 
-  const toRow = (i) => ({
+  const toRow = async (i) => ({
     name: i.name,
     type: i.type,
     qty: i.system?.quantity ?? 1,
     weight: i.system?.weight?.value ?? (typeof i.system?.weight === "number" ? i.system.weight : "") ?? "",
-    equipped: i.system?.equipped ? "●" : ""
+    equipped: i.system?.equipped ? "●" : "",
+    description: await describe(i)
   });
   const byEquippedThenName = (a, b) =>
     a.equipped === b.equipped ? a.name.localeCompare(b.name, game.i18n.lang) : a.equipped ? -1 : 1;
 
   // Suelto = no está dentro de ningún contenedor. Los contenedores tienen bloque propio.
   // Lista plana, por compatibilidad: el Markdown y cualquier consumidor viejo la usan.
-  const inventory = invItems.map(toRow);
+  const inventory = await Promise.all(invItems.map(toRow));
 
   const loose = invItems.filter((i) => !containerOf(i) && i.type !== "container");
-  const invGroups = INV_TYPES
-    .filter((t) => t !== "container")
-    .map((t) => ({
-      label: loc(CAT_KEYS[t]),
-      rows: loose.filter((i) => i.type === t).map(toRow).sort(byEquippedThenName)
-    }))
-    .filter((g) => g.rows.length);
+  // Bucle en vez de .map(): toRow es async (enriquece la descripción) y no se
+  // puede await dentro de un literal de objeto.
+  const invGroups = [];
+  for (const t of INV_TYPES.filter((x) => x !== "container")) {
+    const deTipo = loose.filter((i) => i.type === t);
+    if (!deTipo.length) continue;
+    const rows = (await Promise.all(deTipo.map(toRow))).sort(byEquippedThenName);
+    invGroups.push({ label: loc(CAT_KEYS[t]), rows });
+  }
 
   // Un bloque por contenedor, con su contenido adentro.
   const containerGroups = [];
   for (const c of invItems.filter((i) => i.type === "container")) {
-    const rows = invItems.filter((i) => containerOf(i) === c.id).map(toRow).sort(byEquippedThenName);
+    const rows = (await Promise.all(invItems.filter((i) => containerOf(i) === c.id).map(toRow))).sort(byEquippedThenName);
     // La bolsa de contención marca su contenido como sin peso: el sistema lo sabe
     // vía properties, y hay que decirlo o el peso listado no cierra con el total.
     const props = c.system?.properties;

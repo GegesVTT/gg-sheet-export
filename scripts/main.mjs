@@ -5,7 +5,7 @@
  */
 
 import { actorToMarkdown } from "./markdown.mjs";
-import { buildPrintHTML } from "./print.mjs";
+import { buildPrintHTML, buildStandaloneHTML } from "./print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
 const SUPPORTED_TYPES = ["character", "npc"];
@@ -69,6 +69,15 @@ async function exportPdf(actor) {
   win.document.close();
 }
 
+async function exportHtml(actor) {
+  const data = await extractActorData(actor);
+  const html = await buildStandaloneHTML(data);
+  const save = foundry.utils.saveDataToFile ?? globalThis.saveDataToFile;
+  const slug = actor.name.slugify?.() ?? actor.name.toLowerCase().replace(/\s+/g, "-");
+  save(html, "text/html", `${slug}.html`);
+  ui.notifications.info(game.i18n.format("GGSE.HtmlSaved", { name: actor.name }));
+}
+
 async function exportMarkdown(actor) {
   const data = await extractActorData(actor);
   const md = actorToMarkdown(data);
@@ -99,6 +108,7 @@ class GGSheetViewer extends HandlebarsApplicationMixin(ApplicationV2) {
     position: { width: 880, height: 900 },
     actions: {
       ggseExportPdf: GGSheetViewer.#onExportPdf,
+      ggseExportHtml: GGSheetViewer.#onExportHtml,
       ggseExportMd: GGSheetViewer.#onExportMd
     }
   };
@@ -124,6 +134,10 @@ class GGSheetViewer extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static async #onExportPdf() {
     await exportPdf(this.actor);
+  }
+
+  static async #onExportHtml() {
+    await exportHtml(this.actor);
   }
 
   static async #onExportMd() {

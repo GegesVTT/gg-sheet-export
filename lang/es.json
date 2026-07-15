@@ -96,5 +96,8 @@
   "GGSE.Weightless": "el contenido no pesa",
   "GGSE.EmptyContainer": "vacío",
   "GGSE.Encumbered": "cargado a partir de",
-  "GGSE.Max": "máx."
+  "GGSE.Max": "máx.",
+  "GGSE.ExportHtml": "HTML",
+  "GGSE.HtmlSaved": "Ficha HTML de {name} guardada.",
+  "GGSE.HtmlHint": "Los círculos ? despliegan la descripción de cada rasgo, conjuro u objeto. Al imprimir este archivo, las descripciones se ocultan y obtenés la ficha compacta."
 }
