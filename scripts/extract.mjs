@@ -126,13 +126,23 @@ export async function extractActorData(actor) {
     .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
 
   const attrs = sys.attributes ?? {};
-  const movement = Object.entries(attrs.movement ?? {})
-    .filter(([k, v]) => typeof v === "number" && v > 0)
-    .map(([k, v]) => `${cfgLabel(C.movementTypes, k)} ${v} ${attrs.movement?.units ?? "ft"}`)
+  /* Recorrer attrs.movement a ciegas no sirve: dnd5e 5.x mete ahí valores derivados
+     ("speed", "max") que no son formas de desplazarse y salían impresos como
+     "Walk 25 ft, speed 25 ft, max 25 ft". Se usa la lista del propio CONFIG, que
+     se adapta sola si el sistema agrega tipos nuevos. */
+  const MOVE_TYPES = Object.keys(C.movementTypes ?? {}).length
+    ? Object.keys(C.movementTypes)
+    : ["walk", "burrow", "climb", "fly", "swim"];
+  const movement = MOVE_TYPES
+    .filter((k) => typeof attrs.movement?.[k] === "number" && attrs.movement[k] > 0)
+    .map((k) => `${cfgLabel(C.movementTypes, k)} ${attrs.movement[k]} ${attrs.movement?.units ?? "ft"}`)
     .join(", ");
 
+  const SENSE_TYPES = Object.keys(C.senses ?? {}).length
+    ? Object.keys(C.senses)
+    : ["blindsight", "darkvision", "tremorsense", "truesight"];
   const senses = Object.entries(attrs.senses ?? {})
-    .filter(([k, v]) => typeof v === "number" && v > 0)
+    .filter(([k, v]) => SENSE_TYPES.includes(k) && typeof v === "number" && v > 0)
     .map(([k, v]) => `${cfgLabel(C.senses, k)} ${v} ${attrs.senses?.units ?? "ft"}`)
     .join(", ");
 
@@ -356,16 +366,32 @@ export async function extractActorData(actor) {
     try { contentsWeight = await c.system?.contentsWeight ?? null; } catch { /* según versión */ }
     const cap = c.system?.capacity?.weight?.value ?? null;
     containerGroups.push({
+      id: c.id,
       name: c.name,
       weight: c.system?.weight?.value ?? "",
       capacity: cap,
       contentsWeight: typeof contentsWeight === "number" ? Math.round(contentsWeight * 100) / 100 : null,
       weightless,
+      parentId: containerOf(c) ?? null,
       parent: containerOf(c) ? (invItems.find((x) => x.id === containerOf(c))?.name ?? "") : "",
       rows
     });
   }
-  containerGroups.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
+
+  /* Un contenedor puede vivir dentro de otro (la caja de limosnas va en la mochila).
+     Ordenados alfabéticamente quedaban separados de su padre y no se entendía;
+     así cada anidado sale inmediatamente después del contenedor que lo lleva. */
+  const byName = (a, b) => a.name.localeCompare(b.name, game.i18n.lang);
+  const ordered = [];
+  const pushWithChildren = (c) => {
+    ordered.push(c);
+    containerGroups.filter((x) => x.parentId === c.id).sort(byName).forEach(pushWithChildren);
+  };
+  containerGroups.filter((c) => !c.parentId).sort(byName).forEach(pushWithChildren);
+  // Cualquiera cuyo padre no esté en la lista (por si acaso) no se pierde.
+  for (const c of containerGroups) if (!ordered.includes(c)) ordered.push(c);
+  containerGroups.length = 0;
+  containerGroups.push(...ordered);
 
   /* El peso total lo calcula el sistema: incluye las monedas (0.02 lb c/u) y excluye
      el contenido de los contenedores sin peso. Sumarlo a mano daba mal por los dos
