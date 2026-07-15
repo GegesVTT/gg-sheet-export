@@ -15,14 +15,195 @@
     <div class="ggse-hero-text">
       <h1>{{name}}</h1>
       <p class="ggse-subtitle">
-        {{#if isNPC}}
-          {{creatureType}}{{#if cr}} · CR {{cr}}{{/if}}{{#if alignment}} · {{alignment}}{{/if}}
+        {{#if isPF2e}}
+          {{#if isNPC}}
+            {{#if rarity}}{{rarity}} · {{/if}}{{size}} {{creatureTraits}} · {{localize "GGSE.Level"}} {{level}}
+          {{else}}
+            {{#if heritage}}{{heritage}}{{else}}{{ancestry}}{{/if}} · {{classes}} · {{localize "GGSE.Level"}} {{level}}{{#if background}} · {{background}}{{/if}}{{#if deity}} · {{deity}}{{/if}}
+          {{/if}}
         {{else}}
-          {{race}} · {{classes}} · {{localize "GGSE.Level"}} {{level}}{{#if background}} · {{background}}{{/if}}{{#if alignment}} · {{alignment}}{{/if}}
+          {{#if isNPC}}
+            {{creatureType}}{{#if cr}} · CR {{cr}}{{/if}}{{#if alignment}} · {{alignment}}{{/if}}
+          {{else}}
+            {{race}} · {{classes}} · {{localize "GGSE.Level"}} {{level}}{{#if background}} · {{background}}{{/if}}{{#if alignment}} · {{alignment}}{{/if}}
+          {{/if}}
         {{/if}}
       </p>
     </div>
   </header>
+
+{{#if isPF2e}}
+{{!-- ============ PATHFINDER 2E ============ --}}
+
+  <section class="ggse-band">
+    <span><b>{{localize "GGSE.AC"}}</b>{{ac}}</span>
+    <span><b>{{localize "GGSE.HP"}}</b>{{hp.value}}/{{hp.max}}{{#if hp.temp}} (+{{hp.temp}}){{/if}}</span>
+    <span><b>{{localize "GGSE.PF2E.Perception"}}</b>{{perception.mod}} <span class="ggse-rank">{{perception.rankAbbr}}</span></span>
+    <span><b>{{localize "GGSE.Initiative"}}</b>{{init}}</span>
+    {{#if movement}}<span><b>{{localize "GGSE.Speed"}}</b>{{movement}}</span>{{/if}}
+    {{#if senses}}<span><b>{{localize "GGSE.Senses"}}</b>{{senses}}</span>{{/if}}
+    {{#if classDC}}<span><b>{{localize "GGSE.PF2E.ClassDC"}}</b>{{classDC.dc}}</span>{{/if}}
+  </section>
+
+  {{#unless isNPC}}
+  <section class="ggse-band ggse-status">
+    <span><b>{{localize "GGSE.PF2E.HeroPoints"}}</b><span class="ggse-pips">{{heroPoints.bubbles}}</span></span>
+    {{#if focus}}<span><b>{{localize "GGSE.PF2E.FocusPoints"}}</b><span class="ggse-pips">{{focus.bubbles}}</span></span>{{/if}}
+    <span><b>{{localize "GGSE.PF2E.Dying"}}</b><span class="ggse-pips">{{dying.bubbles}}</span></span>
+    <span><b>{{localize "GGSE.PF2E.Wounded"}}</b><span class="ggse-pips">{{wounded.bubbles}}</span></span>
+    {{#if shield}}<span><b>{{localize "GGSE.PF2E.CatShields"}}</b>{{shield.name}} {{shield.ac}} · {{shield.hp}}</span>{{/if}}
+  </section>
+  {{/unless}}
+
+  {{!-- pf2e no tiene puntuaciones de característica: solo modificadores --}}
+  <section class="ggse-abilities">
+    {{#each abilities}}
+    <div class="ggse-ab">
+      <div class="ggse-ab-abbr">{{abbr}}</div>
+      <div class="ggse-ab-mod">{{mod}}</div>
+    </div>
+    {{/each}}
+  </section>
+
+  {{!-- las tres salvaciones llevan rango propio; no van dentro de las características --}}
+  <section class="ggse-saves">
+    {{#each saves}}
+    <div class="ggse-save">
+      <div class="ggse-save-label">{{label}}</div>
+      <div class="ggse-save-mod">{{mod}}</div>
+      <div class="ggse-save-rank">{{rankLabel}}</div>
+    </div>
+    {{/each}}
+  </section>
+  {{#if savesNote}}<p class="ggse-dim ggse-savesnote">{{savesNote}}</p>{{/if}}
+
+  <div class="ggse-cols">
+    <section>
+      <h2>{{localize "GGSE.Skills"}}</h2>
+      <table>
+        {{#each skills}}
+        <tr>
+          <td class="ggse-prof">{{rankAbbr}}</td>
+          <td>{{label}}</td>
+          <td class="ggse-dim">{{ability}}</td>
+          <td class="ggse-num">{{mod}}</td>
+        </tr>
+        {{/each}}
+      </table>
+    </section>
+
+    <div>
+      <section>
+        <h2>{{localize "GGSE.Traits"}}</h2>
+        {{#if languages}}<p><b>{{localize "GGSE.Languages"}}:</b> {{languages}}</p>{{/if}}
+        {{#if immune}}<p><b>{{localize "GGSE.Immunities"}}:</b> {{immune}}</p>{{/if}}
+        {{#if resist}}<p><b>{{localize "GGSE.Resistances"}}:</b> {{resist}}</p>{{/if}}
+        {{#if vuln}}<p><b>{{localize "GGSE.Vulnerabilities"}}:</b> {{vuln}}</p>{{/if}}
+      </section>
+
+      {{#if strikes.length}}
+      <section>
+        <h2>{{localize "GGSE.PF2E.Strikes"}}</h2>
+        <ul class="ggse-plain">
+          {{#each strikes}}
+          <li>
+            <span class="ggse-glyph">{{glyph}}</span>
+            <strong>{{name}}</strong>
+            <span class="ggse-num-inline">{{variants}}</span>
+            <div class="ggse-dim">{{damage}}{{#if traits}} · {{traits}}{{/if}}</div>
+          </li>
+          {{/each}}
+        </ul>
+      </section>
+      {{/if}}
+
+      {{#each actionGroups}}
+      <section>
+        <h2>{{label}}</h2>
+        <ul class="ggse-plain">
+          {{#each rows}}
+          <li><span class="ggse-glyph">{{glyph}}</span> <strong>{{name}}</strong>{{#if uses}}<span class="ggse-uses"> {{uses}}</span>{{/if}}{{#if traits}}<span class="ggse-dim"> · {{traits}}</span>{{/if}}</li>
+          {{/each}}
+        </ul>
+      </section>
+      {{/each}}
+    </div>
+  </div>
+
+  {{#if featureGroups.length}}
+  <section>
+    <h2>{{localize "GGSE.Features"}}</h2>
+    <div class="ggse-cols">
+      {{#each featureGroups}}
+      <div>
+        <h3>{{label}}</h3>
+        <ul class="ggse-plain">
+          {{#each feats}}
+          <li>{{#if glyph}}<span class="ggse-glyph">{{glyph}}</span> {{/if}}<strong>{{name}}</strong>{{#if level}}<span class="ggse-dim"> · {{localize "GGSE.Level"}} {{level}}</span>{{/if}}</li>
+          {{/each}}
+        </ul>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  {{#if hasSpells}}
+  <section>
+    <h2>{{localize "GGSE.Spells"}}</h2>
+    {{#each spellEntries}}
+    <div class="ggse-entry">
+      <h3>{{name}} <span class="ggse-dim">· {{tradition}} · {{mode}} · {{rankLabel}}</span></h3>
+      <p class="ggse-dim ggse-spellmeta">
+        {{localize "GGSE.PF2E.SpellDC"}}: <strong>{{dc}}</strong>{{#if attack}} · {{localize "GGSE.PF2E.SpellAttack"}}: <strong>{{attack}}</strong>{{/if}}
+      </p>
+      {{#each groups}}
+      <div class="ggse-spell-level">
+        <h4>{{label}}{{#if slots}} <span class="ggse-slots">{{slots}} {{bubbles}}</span>{{/if}}</h4>
+        <ul class="ggse-plain">
+          {{#each spells}}
+          <li>
+            {{#if prepared}}<span class="ggse-pips">{{prepared}}</span> {{/if}}<span class="ggse-glyph">{{glyph}}</span> <strong>{{name}}</strong>
+            <span class="ggse-dim">{{#if defense}}{{defense}}{{/if}}{{#if range}} · {{range}}{{/if}}</span>
+          </li>
+          {{/each}}
+        </ul>
+      </div>
+      {{/each}}
+    </div>
+    {{/each}}
+  </section>
+  {{/if}}
+
+  {{#if invGroups.length}}
+  <section>
+    <h2>{{localize "GGSE.Inventory"}}</h2>
+    <div class="ggse-cols">
+      {{#each invGroups}}
+      <div>
+        <h3>{{label}}</h3>
+        <table>
+          {{#each rows}}
+          <tr>
+            <td class="ggse-prof">{{equipped}}{{invested}}</td>
+            <td>{{name}}</td>
+            <td class="ggse-num">{{#if qty}}×{{qty}}{{/if}}</td>
+            <td class="ggse-num ggse-dim">{{bulk}}</td>
+          </tr>
+          {{/each}}
+        </table>
+      </div>
+      {{/each}}
+    </div>
+    <p class="ggse-currency">
+      {{#if currency}}<strong>{{localize "GGSE.Currency"}}:</strong> {{currency}}{{/if}}
+      {{#if totalBulk}} · <strong>{{localize "GGSE.PF2E.Bulk"}}:</strong> {{totalBulk}}{{/if}}
+    </p>
+  </section>
+  {{/if}}
+
+{{else}}
+{{!-- ============ D&D 5E ============ --}}
 
   <section class="ggse-band">
     <span><b>{{localize "GGSE.AC"}}</b>{{ac}}</span>
@@ -138,6 +319,8 @@
     {{#if currency}}<p class="ggse-currency"><strong>{{localize "GGSE.Currency"}}:</strong> {{currency}}</p>{{/if}}
   </section>
   {{/if}}
+
+{{/if}}
 
   {{#if biography}}
   <section class="ggse-bio">

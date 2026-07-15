@@ -4,12 +4,32 @@
  * (hojas ApplicationV2 de dnd5e en v13 y hojas legacy V1) y define el visor.
  */
 
-import { extractActorData } from "./extract.mjs";
 import { actorToMarkdown } from "./markdown.mjs";
 import { buildPrintHTML } from "./print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
 const SUPPORTED_TYPES = ["character", "npc"];
+
+/* ---------- despacho por sistema ----------
+   La extracción depende del sistema; la presentación (template, print, markdown) no.
+   Cada extractor exporta extractActorData(actor) y devuelve un objeto plano.
+   Se importa bajo demanda: en un mundo dnd5e nunca se carga el código de pf2e. */
+
+const EXTRACTORS = {
+  dnd5e: () => import("./extract.mjs"),
+  pf2e: () => import("./extract-pf2e.mjs")
+};
+
+function isSupportedSystem() {
+  return game.system.id in EXTRACTORS;
+}
+
+async function extractActorData(actor) {
+  const load = EXTRACTORS[game.system.id];
+  if (!load) throw new Error(`${MODULE_ID} | sistema no soportado: ${game.system.id}`);
+  const mod = await load();
+  return await mod.extractActorData(actor);
+}
 
 /* ---------- acciones de exportación ---------- */
 
@@ -119,6 +139,7 @@ function openViewer(actor) {
 
 /** Hojas legacy (ApplicationV1). */
 Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
+  if (!isSupportedSystem()) return;
   const actor = sheet.actor ?? sheet.object;
   if (!actor || !SUPPORTED_TYPES.includes(actor.type)) return;
   buttons.unshift({
@@ -131,6 +152,7 @@ Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
 
 /** Hojas ApplicationV2 (dnd5e en Foundry v13): inyección DOM en el header. */
 Hooks.on("renderApplicationV2", (app, element) => {
+  if (!isSupportedSystem()) return;
   const actor = app.document;
   if (!(actor instanceof Actor) || !SUPPORTED_TYPES.includes(actor.type)) return;
   if (app instanceof GGSheetViewer) return;
@@ -170,5 +192,5 @@ Hooks.once("init", () => {
       exportMarkdown
     };
   }
-  console.log(`${MODULE_ID} | GG Sheet Export listo (GegesVTT)`);
+  console.log(`${MODULE_ID} | GG Sheet Export listo — sistema: ${game.system.id} (GegesVTT)`);
 });

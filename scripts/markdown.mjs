@@ -38,7 +38,136 @@ function table(headers, rows) {
   return `${head}\n${sep}\n${body}\n`;
 }
 
+
+/** Markdown de Pathfinder 2e. */
+function pf2eToMarkdown(d) {
+  const L = [];
+
+  L.push(`# ${d.name}`);
+  const sub = d.isNPC
+    ? [d.rarity, d.size, d.creatureTraits, `${loc("GGSE.Level")} ${d.level}`]
+    : [d.heritage || d.ancestry, d.classes, `${loc("GGSE.Level")} ${d.level}`, d.background, d.deity];
+  L.push(`> ${sub.filter(Boolean).join(" · ")}`, "");
+
+  // Combate
+  L.push(`## ${loc("GGSE.Combat")}`);
+  L.push(`- **${loc("GGSE.AC")}:** ${d.ac}`);
+  L.push(`- **${loc("GGSE.HP")}:** ${d.hp.value}/${d.hp.max}${d.hp.temp ? ` (+${d.hp.temp} temp)` : ""}`);
+  L.push(`- **${loc("GGSE.PF2E.Perception")}:** ${d.perception?.mod} (${d.perception?.rankLabel})`);
+  L.push(`- **${loc("GGSE.Initiative")}:** ${d.init}`);
+  if (d.movement) L.push(`- **${loc("GGSE.Speed")}:** ${d.movement}`);
+  if (d.senses) L.push(`- **${loc("GGSE.Senses")}:** ${d.senses}`);
+  if (d.classDC) L.push(`- **${loc("GGSE.PF2E.ClassDC")}:** ${d.classDC.dc}`);
+  if (!d.isNPC) {
+    L.push(`- **${loc("GGSE.PF2E.HeroPoints")}:** ${d.heroPoints.value}/${d.heroPoints.max}`);
+    if (d.focus) L.push(`- **${loc("GGSE.PF2E.FocusPoints")}:** ${d.focus.value}/${d.focus.max}`);
+  }
+  L.push("");
+
+  // Características (pf2e: solo modificadores)
+  L.push(`## ${loc("GGSE.Abilities")}`);
+  L.push(table(d.abilities.map((a) => a.abbr), [d.abilities.map((a) => a.mod)]));
+
+  // Salvaciones
+  L.push(`## ${loc("GGSE.PF2E.Saves")}`);
+  L.push(table(
+    [loc("GGSE.Save"), loc("GGSE.Bonus"), "CD", loc("GGSE.Proficiency")],
+    d.saves.map((s2) => [s2.label, s2.mod, String(s2.dc ?? ""), s2.rankLabel])
+  ));
+  if (d.savesNote) L.push(`*${d.savesNote}*`, "");
+
+  // Habilidades
+  L.push(`## ${loc("GGSE.Skills")}`);
+  L.push(table(
+    [loc("GGSE.Skill"), "", loc("GGSE.Bonus"), loc("GGSE.Proficiency")],
+    d.skills.map((s2) => [s2.label, s2.ability, s2.mod, s2.rankLabel])
+  ));
+
+  // Rasgos defensivos
+  const def = [];
+  if (d.languages) def.push(`- **${loc("GGSE.Languages")}:** ${d.languages}`);
+  if (d.immune) def.push(`- **${loc("GGSE.Immunities")}:** ${d.immune}`);
+  if (d.resist) def.push(`- **${loc("GGSE.Resistances")}:** ${d.resist}`);
+  if (d.vuln) def.push(`- **${loc("GGSE.Vulnerabilities")}:** ${d.vuln}`);
+  if (def.length) { L.push(`## ${loc("GGSE.Traits")}`); L.push(...def, ""); }
+
+  // Golpes
+  if (d.strikes.length) {
+    L.push(`## ${loc("GGSE.PF2E.Strikes")}`);
+    L.push(table(
+      [loc("GGSE.Weapon"), "MAP", loc("GGSE.Damage"), loc("GGSE.Properties")],
+      d.strikes.map((st) => [`${st.glyph} **${st.name}**`, st.variants, st.damage, st.traits])
+    ));
+  }
+
+  // Acciones
+  for (const g of d.actionGroups ?? []) {
+    L.push(`## ${g.label}`);
+    for (const r of g.rows) {
+      const extra = [r.uses, r.traits].filter(Boolean).join(" · ");
+      L.push(`- ${r.glyph} **${r.name}**${extra ? ` — ${extra}` : ""}`);
+    }
+    L.push("");
+  }
+
+  // Dotes
+  if (d.featureGroups?.length) {
+    L.push(`## ${loc("GGSE.Features")}`);
+    for (const g of d.featureGroups) {
+      L.push(`### ${g.label}`);
+      for (const f of g.feats) {
+        L.push(`- ${f.glyph ? `${f.glyph} ` : ""}**${f.name}**${f.level ? ` — ${loc("GGSE.Level")} ${f.level}` : ""}`);
+      }
+      L.push("");
+    }
+  }
+
+  // Conjuros: una sección por entrada, cada una con su CD
+  if (d.hasSpells) {
+    L.push(`## ${loc("GGSE.Spells")}`);
+    for (const e of d.spellEntries) {
+      L.push(`### ${e.name}`);
+      const meta = [`**${loc("GGSE.PF2E.Tradition")}:** ${e.tradition}`, `**${loc("GGSE.PF2E.SpellDC")}:** ${e.dc}`];
+      if (e.attack) meta.push(`**${loc("GGSE.PF2E.SpellAttack")}:** ${e.attack}`);
+      meta.push(e.mode);
+      L.push(`> ${meta.join(" · ")}`, "");
+      for (const g of e.groups) {
+        L.push(`#### ${g.label}${g.slots ? ` — ${g.slots} ${g.bubbles}` : ""}`);
+        for (const sp of g.spells) {
+          const tags = [sp.defense, sp.range].filter(Boolean).join(" · ");
+          L.push(`- ${sp.prepared ? `${sp.prepared} ` : ""}${sp.glyph} **${sp.name}**${tags ? ` — *${tags}*` : ""}`);
+        }
+        L.push("");
+      }
+    }
+  }
+
+  // Inventario
+  if (d.invGroups?.length) {
+    L.push(`## ${loc("GGSE.Inventory")}`);
+    for (const g of d.invGroups) {
+      L.push(`### ${g.label}`);
+      L.push(table(
+        ["", loc("GGSE.Item"), loc("GGSE.Qty"), loc("GGSE.PF2E.Bulk")],
+        g.rows.map((i) => [`${i.equipped}${i.invested}`, i.name, String(i.qty), String(i.bulk)])
+      ));
+    }
+    const tot = [];
+    if (d.currency) tot.push(`**${loc("GGSE.Currency")}:** ${d.currency}`);
+    if (d.totalBulk) tot.push(`**${loc("GGSE.PF2E.Bulk")}:** ${d.totalBulk}`);
+    if (tot.length) L.push(tot.join(" · "), "");
+  }
+
+  const bio = htmlToMd(d.biography);
+  if (bio) { L.push(`## ${loc("GGSE.Biography")}`); L.push(bio, ""); }
+
+  L.push("---");
+  L.push(`*${loc("GGSE.ExportedWith")} GG Sheet Export · ${d.exportDate}*`);
+  return L.join("\n");
+}
+
 export function actorToMarkdown(d) {
+  if (d.isPF2e) return pf2eToMarkdown(d);
   const L = [];
 
   // Encabezado

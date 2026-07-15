@@ -267,3 +267,106 @@
 button.ggse-header-btn:hover {
   color: var(--ggse-amber, #e0a23c);
 }
+
+/* ---------- Pathfinder 2e ---------- */
+
+/* Símbolos de acción (◆ ◇ ↺). Van en ámbar y sin cortar: "◆–◆◆◆" es una unidad. */
+.gg-sheet-export .ggse-glyph {
+  color: var(--ggse-amber);
+  font-size: 12px;
+  letter-spacing: -1px;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+/* Casillas de puntos de héroe, enfoque, agonizante, huecos de conjuro */
+.gg-sheet-export .ggse-pips {
+  color: var(--ggse-amber);
+  letter-spacing: 1px;
+  font-size: 12px;
+}
+
+/* Letra de competencia (U/T/E/M/L) en la columna de habilidades */
+.gg-sheet-export .ggse-rank {
+  display: inline-block;
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 9px;
+  color: var(--ggse-bg);
+  background: var(--ggse-amber);
+  border-radius: 2px;
+  padding: 0 3px;
+  margin-left: 3px;
+  vertical-align: 1px;
+}
+
+/* Segunda banda: estados y recursos */
+.gg-sheet-export .ggse-status {
+  margin-top: -6px;
+}
+
+/* Las tres salvaciones, en fila propia (en pf2e no viven dentro de las características) */
+.gg-sheet-export .ggse-saves {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gg-sheet-export .ggse-save {
+  text-align: center;
+  border: 1px solid var(--ggse-rule);
+  border-radius: 6px;
+  padding: 5px 2px;
+  background: var(--ggse-panel);
+}
+
+.gg-sheet-export .ggse-save-label {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ggse-amber);
+}
+
+.gg-sheet-export .ggse-save-mod {
+  font-size: 19px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.gg-sheet-export .ggse-save-rank {
+  font-size: 10px;
+  color: var(--ggse-dim);
+}
+
+.gg-sheet-export .ggse-savesnote {
+  margin: -8px 0 12px;
+  font-style: italic;
+}
+
+/* Variantes de MAP: +14 / +9 / +4 */
+.gg-sheet-export .ggse-num-inline {
+  float: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ggse-dim);
+  font-size: 13px;
+}
+
+/* Cada entrada de conjuros es autónoma: tradición, CD y ataque propios */
+.gg-sheet-export .ggse-entry {
+  border-left: 2px solid var(--ggse-rule);
+  padding-left: 10px;
+  margin-bottom: 12px;
+}
+
+.gg-sheet-export .ggse-entry h4 {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 11px;
+  color: var(--ggse-dim);
+  border: none;
+  margin: 6px 0 2px;
+}
+
+@media (max-width: 640px) {
+  .gg-sheet-export .ggse-saves { grid-template-columns: 1fr; }
+}
