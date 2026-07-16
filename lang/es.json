@@ -99,5 +99,7 @@
   "GGSE.Max": "máx.",
   "GGSE.ExportHtml": "HTML",
   "GGSE.HtmlSaved": "Ficha HTML de {name} guardada.",
-  "GGSE.HtmlHint": "Los círculos ? despliegan la descripción de cada rasgo, conjuro u objeto. Al imprimir este archivo, las descripciones se ocultan y obtenés la ficha compacta."
+  "GGSE.HtmlHint": "Los círculos ? despliegan la descripción de cada rasgo, conjuro u objeto. Al imprimir este archivo, las descripciones se ocultan y obtenés la ficha compacta.",
+  "GGSE.FooterThanks": "Gracias por usar GegesVTT",
+  "GGSE.FooterStar": "¿Te sirvió? Dejá una"
 }

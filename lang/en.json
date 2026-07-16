@@ -99,5 +99,7 @@
   "GGSE.Max": "max",
   "GGSE.ExportHtml": "HTML",
   "GGSE.HtmlSaved": "HTML sheet for {name} saved.",
-  "GGSE.HtmlHint": "The ? circles expand the description of each feature, spell or item. When you print this file, descriptions are hidden and you get the compact sheet."
+  "GGSE.HtmlHint": "The ? circles expand the description of each feature, spell or item. When you print this file, descriptions are hidden and you get the compact sheet.",
+  "GGSE.FooterThanks": "Thanks for using GegesVTT",
+  "GGSE.FooterStar": "Found it useful? Leave a"
 }

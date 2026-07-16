@@ -164,7 +164,7 @@ function pf2eToMarkdown(d) {
   if (bio) { L.push(`## ${loc("GGSE.Biography")}`); L.push(bio, ""); }
 
   L.push("---");
-  L.push(`*${loc("GGSE.ExportedWith")} GG Sheet Export · ${d.exportDate}*`);
+  L.push(`*${loc("GGSE.ExportedWith")} [GG Sheet Export](https://github.com/GegesVTT/gg-sheet-export) · ${loc("GGSE.FooterThanks")} · ${d.exportDate}*`);
   return L.join("\n");
 }
 
@@ -311,7 +311,7 @@ export function actorToMarkdown(d) {
   }
 
   L.push("---");
-  L.push(`*${loc("GGSE.ExportedWith")} GG Sheet Export · ${d.exportDate}*`);
+  L.push(`*${loc("GGSE.ExportedWith")} [GG Sheet Export](https://github.com/GegesVTT/gg-sheet-export) · ${loc("GGSE.FooterThanks")} · ${d.exportDate}*`);
 
   return L.join("\n");
 }

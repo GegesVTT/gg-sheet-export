@@ -528,11 +528,15 @@ body { background:#efe9dd; margin:0; padding:16px; }
 .ggse-hint { text-align:center; font-size:10pt; color:var(--dim); margin:0 0 12px;
   font-style:italic; }
 
+.footer-line a, .footer-star a { color:var(--amber); text-decoration:none; }
+.footer-line a:hover, .footer-star a:hover { text-decoration:underline; }
+.footer-star { text-align:center; font-size:9.5pt; color:var(--dim); margin-top:2pt; }
+
 /* ---- impresión: este mismo archivo, impreso, da la ficha compacta ---- */
 @media print {
   body { background:#fff; padding:0; }
   .page { box-shadow:none; max-width:none; padding:0; border-radius:0; }
-  .ggse-desc, .ggse-hint { display:none !important; }
+  .ggse-desc, .ggse-hint, .footer-star { display:none !important; }
   .multicol { column-count:2; }
   @page { size:A4; margin:12mm 12mm 14mm; }
 }
@@ -543,7 +547,14 @@ body { background:#efe9dd; margin:0; padding:16px; }
   ${logo ? `<div class="ggse-brand"><img src="${logo}" alt=""><span>Crónicas Bárdicas</span></div>` : ""}
   <p class="ggse-hint">${loc("GGSE.HtmlHint")}</p>
 ${cuerpo}
-  <p class="footer-line">${esc(dd.name)} · ${loc("GGSE.ExportedWith")} GG Sheet Export · GegesVTT · ${esc(dd.exportDate)}</p>
+  <p class="footer-line">
+    ${esc(dd.name)} · ${loc("GGSE.ExportedWith")}
+    <a href="https://github.com/GegesVTT/gg-sheet-export" target="_blank" rel="noopener">GG Sheet Export</a>
+    · ${loc("GGSE.FooterThanks")} · ${esc(dd.exportDate)}
+  </p>
+  <p class="footer-star">${loc("GGSE.FooterStar")}
+    <a href="https://github.com/GegesVTT/gg-sheet-export" target="_blank" rel="noopener">⭐ GitHub</a>
+  </p>
 </div>
 </body>
 </html>`;
