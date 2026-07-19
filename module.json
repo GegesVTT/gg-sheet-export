@@ -1,8 +1,8 @@
 {
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
-  "description": "Elegant reading view and exports for D&D 5e / Pathfinder 2e character sheets and for journals, with vector-crisp PDF (native print), standalone HTML and Obsidian-ready Markdown. Journals export in their own tome-style layout. Part of the GegesVTT family. — Visor de lectura y exportación de fichas de D&D 5e / Pathfinder 2e y de journals (con estilo propio de tomo), a PDF vectorial, HTML autónomo y Markdown para Obsidian.",
-  "version": "1.6.0",
+  "description": "Elegant reading view and exports for D&D 5e / Pathfinder 2e character sheets and journals, plus printable spell cards for D&D 5e. Vector-crisp PDF (native print), standalone HTML and Obsidian-ready Markdown; journals use a tome-style layout and spell cards are poker-size, double-sided, ready to cut. Part of the GegesVTT family. — Visor y exportación de fichas de D&D 5e / Pathfinder 2e y de journals, más tarjetas de conjuros imprimibles para D&D 5e (tamaño póker, doble faz), a PDF vectorial, HTML autónomo y Markdown para Obsidian.",
+  "version": "1.7.0",
   "authors": [
     {
       "name": "Geges",
@@ -37,7 +37,8 @@
   ],
   "styles": [
     "styles/viewer.css",
-    "styles/journal-viewer.css"
+    "styles/journal-viewer.css",
+    "styles/spell-cards.css"
   ],
   "languages": [
     {
@@ -53,7 +54,7 @@
   ],
   "url": "https://github.com/GegesVTT/gg-sheet-export",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
-  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.6.0/module.zip",
+  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.7.0/module.zip",
   "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",
   "media": [
     {

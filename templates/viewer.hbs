@@ -9,6 +9,11 @@
   <button type="button" data-action="ggseExportMd">
     <i class="fa-brands fa-markdown"></i> {{localize "GGSE.ExportMd"}}
   </button>
+  {{#unless isPF2e}}{{#if hasSpells}}
+  <button type="button" data-action="ggseExportSpellCards">
+    <i class="fa-solid fa-wand-sparkles"></i> {{localize "GGSE.Cards.Button"}}
+  </button>
+  {{/if}}{{/unless}}
 </div>
 
 <div class="ggse-scroll">

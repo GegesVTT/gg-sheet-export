@@ -98,6 +98,8 @@ Open any character or NPC sheet — you'll see an open-book 📖 icon in the win
 
 **Journals too.** The same 📖 icon appears on any Journal Entry (and on right-click in the Journals sidebar). Journals export in their own **tome layout** — cover, auto-generated contents, drop caps, themed tables — to PDF, standalone HTML and Obsidian-ready Markdown (with `@UUID` references turned into `[[wiki-links]]`). GM **secret blocks are left out by default**; a world setting lets you include them.
 
+**Printable spell cards (D&D 5e).** Casters get a 🪄 button in the reading view (and on right-click in the Actors sidebar). It builds poker-size cards (63×88mm, 9 per A4), **double-sided** — front with the stats (casting time, range, duration, components, plus the character's own save DC / attack) and back with the description. Fronts and backs print as mirrored sheets so they line up for duplex printing; cut along the edges and sleeve them. Long spells (Wish and friends) are abridged with a manual page reference, so each spell stays on a single card. A theme system is in place for future card packs.
+
 ## 🔌 Macro API
 
 ```js
@@ -115,6 +117,11 @@ api.openJournal(journal);
 await api.exportJournalPdf(journal);
 await api.exportJournalHtml(journal);
 await api.exportJournalMarkdown(journal);
+
+// Spell cards (D&D 5e) — preview window or straight to PDF
+const pc = game.actors.getName("Rahegal");
+api.openSpellCards(pc);
+await api.exportSpellCards(pc);
 ```
 
 ## ✅ Compatibility
@@ -214,6 +221,8 @@ Abrí cualquier ficha de personaje o PNJ: vas a ver un ícono de libro abierto �
 
 **También journals.** El mismo ícono 📖 aparece en cualquier Journal Entry (y con clic derecho en la barra de Diarios). Los journals se exportan con su **propio estilo de tomo** — portada, índice automático, capitulares, tablas temáticas — a PDF, HTML autónomo y Markdown para Obsidian (con las referencias `@UUID` convertidas en `[[wiki-links]]`). Los **bloques secretos de GM quedan afuera por defecto**; un ajuste de mundo permite incluirlos.
 
+**Tarjetas de conjuros imprimibles (D&D 5e).** Los lanzadores tienen un botón 🪄 en el visor (y con clic derecho en la barra de Actores). Arma tarjetas tamaño póker (63×88mm, 9 por hoja A4), **a doble faz** — frente con los datos (tiempo de lanzamiento, alcance, duración, componentes, más la CD de salvación / ataque del propio personaje) y dorso con la descripción. Los frentes y dorsos se imprimen como hojas espejadas para que coincidan al imprimir doble cara; se cortan por el borde y se enfundan. Los hechizos largos (Wish y compañía) se resumen con la referencia de página del manual, así cada conjuro entra en una sola tarjeta. El sistema de temas queda listo para futuros packs.
+
 ### 🔌 API para macros
 
 ```js
@@ -231,6 +240,11 @@ api.openJournal(journal);
 await api.exportJournalPdf(journal);
 await api.exportJournalHtml(journal);
 await api.exportJournalMarkdown(journal);
+
+// Tarjetas de conjuros (D&D 5e) — ventana de vista previa o PDF directo
+const pc = game.actors.getName("Rahegal");
+api.openSpellCards(pc);
+await api.exportSpellCards(pc);
 ```
 
 ### ✅ Compatibilidad

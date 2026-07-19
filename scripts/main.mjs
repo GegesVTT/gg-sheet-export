@@ -9,6 +9,8 @@ import { buildPrintHTML, buildStandaloneHTML } from "./print.mjs";
 import { extractJournalData } from "./extract-journal.mjs";
 import { journalToMarkdown } from "./journal-markdown.mjs";
 import { buildJournalPrintHTML, buildJournalStandaloneHTML, buildJournalBody } from "./journal-print.mjs";
+import { extractSpellCards } from "./extract-spellcards.mjs";
+import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards } from "./spellcards-print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
 const SUPPORTED_TYPES = ["character", "npc"];
@@ -174,7 +176,8 @@ class GGSheetViewer extends HandlebarsApplicationMixin(ApplicationV2) {
     actions: {
       ggseExportPdf: GGSheetViewer.#onExportPdf,
       ggseExportHtml: GGSheetViewer.#onExportHtml,
-      ggseExportMd: GGSheetViewer.#onExportMd
+      ggseExportMd: GGSheetViewer.#onExportMd,
+      ggseExportSpellCards: GGSheetViewer.#onExportSpellCards
     }
   };
 
@@ -207,6 +210,10 @@ class GGSheetViewer extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static async #onExportMd() {
     await exportMarkdown(this.actor);
+  }
+
+  static async #onExportSpellCards() {
+    openSpellCardsViewer(this.actor);
   }
 }
 
@@ -265,6 +272,71 @@ class GGJournalViewer extends HandlebarsApplicationMixin(ApplicationV2) {
 
 function openJournalViewer(journal) {
   new GGJournalViewer(journal).render(true);
+}
+
+/* ---------- tarjetas de conjuros (D&D 5e) ----------
+   Módulo aparte con estética por tema (hoy "cronicas"; a futuro, packs). Solo
+   D&D 5e por ahora. Salida a doble faz, tamaño póker, lista para cortar. */
+
+function spellCardTheme() {
+  try { return game.settings.get(MODULE_ID, "spellCardTheme") || "cronicas"; }
+  catch (e) { return "cronicas"; }
+}
+
+async function exportSpellCardsPdf(actor) {
+  const data = await extractSpellCards(actor);
+  if (!data.spellCount) { ui.notifications.warn(game.i18n.localize("GGSE.Cards.NoSpells")); return; }
+  const html = buildCardsPrintHTML(data, spellCardTheme());
+  if (printHTMLToFrame(html)) return;
+
+  const win = window.open("", "_blank");
+  if (!win) { ui.notifications.warn(game.i18n.localize("GGSE.PopupBlocked")); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+class GGSpellCardsViewer extends HandlebarsApplicationMixin(ApplicationV2) {
+  constructor(actor, options = {}) {
+    super(options);
+    this.actor = actor;
+  }
+
+  static DEFAULT_OPTIONS = {
+    classes: ["gg-sheet-export"],
+    tag: "div",
+    window: { icon: "fa-solid fa-wand-sparkles", resizable: true, contentClasses: ["ggse-content"] },
+    position: { width: 900, height: 900 },
+    actions: { ggseCardsPdf: GGSpellCardsViewer.#onExportPdf }
+  };
+
+  static PARTS = {
+    body: { template: `modules/${MODULE_ID}/templates/spell-cards-viewer.hbs`, scrollable: [".ggse-scroll"] }
+  };
+
+  get id() { return `ggse-cards-viewer-${this.actor.id}`; }
+  get title() { return `${this.actor.name} — ${game.i18n.localize("GGSE.Cards.Title")}`; }
+
+  async _prepareContext(_options) {
+    const data = await extractSpellCards(this.actor);
+    const theme = spellCardTheme();
+    return {
+      cardsCss: themeStyle(theme) + CARDS_CSS,
+      bodyHtml: buildCardsBody(data, theme, { mirror: false })
+    };
+  }
+
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    // Ajuste de dorsos igual que en el PDF, para que la vista previa sea fiel.
+    try { fitSpellCards(this.element); } catch (e) { /* noop */ }
+  }
+
+  static async #onExportPdf() { await exportSpellCardsPdf(this.actor); }
+}
+
+function openSpellCardsViewer(actor) {
+  new GGSpellCardsViewer(actor).render(true);
 }
 
 /* ---------- botones en el header de las fichas ---------- */
@@ -372,6 +444,27 @@ Hooks.on("getJournalDirectoryEntryContext", (html, options) => {
   });
 });
 
+/** Menú contextual del directorio de actores (clic derecho → tarjetas). */
+Hooks.on("getActorDirectoryEntryContext", (html, options) => {
+  const resolve = (li) => {
+    const el = li?.[0] ?? li;
+    const id = el?.dataset?.entryId ?? el?.dataset?.documentId;
+    return id ? game.actors.get(id) : null;
+  };
+  options.push({
+    name: game.i18n.localize("GGSE.Cards.Button"),
+    icon: '<i class="fa-solid fa-wand-sparkles"></i>',
+    condition: (li) => {
+      const actor = resolve(li);
+      return !!actor && game.system.id === "dnd5e" && actor.items.some((i) => i.type === "spell");
+    },
+    callback: (li) => {
+      const actor = resolve(li);
+      if (actor) openSpellCardsViewer(actor);
+    }
+  });
+});
+
 /* ---------- ajustes ---------- */
 
 Hooks.once("init", () => {
@@ -382,6 +475,17 @@ Hooks.once("init", () => {
     config: true,
     type: Boolean,
     default: false
+  });
+
+  // Tema de las tarjetas de conjuros. Hoy uno solo; queda listo para sumar packs.
+  game.settings.register(MODULE_ID, "spellCardTheme", {
+    name: "GGSE.Cards.SettingThemeName",
+    hint: "GGSE.Cards.SettingThemeHint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: { cronicas: "Crónicas Bárdicas" },
+    default: "cronicas"
   });
 });
 
@@ -398,7 +502,9 @@ Hooks.once("init", () => {
       openJournal: openJournalViewer,
       exportJournalPdf,
       exportJournalHtml,
-      exportJournalMarkdown
+      exportJournalMarkdown,
+      openSpellCards: openSpellCardsViewer,
+      exportSpellCards: exportSpellCardsPdf
     };
   }
   console.log(`${MODULE_ID} | GG Sheet Export listo — sistema: ${game.system.id} (GegesVTT)`);
