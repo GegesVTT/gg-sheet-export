@@ -1,0 +1,105 @@
+/* GG Sheet Export — visor de journals en pantalla.
+   La estética de "tomo" del PDF se define inline en journal-print.mjs (JOURNAL_CSS);
+   acá solo va lo propio del visor: la barra de exportación y el pergamino de fondo. */
+
+.ggse-jrnl-root {
+  --ink:#241a12; --amber:#a06914; --amber-b:#e0a23c; --wine:#8a2f3f;
+  --rule:#c9b99a; --dim:#6f6151; --paper:#fbf7ee;
+  display:flex; flex-direction:column; height:100%;
+  background:#2a211a;
+}
+
+.ggse-jrnl-root .ggse-toolbar {
+  display:flex; gap:8px; padding:8px 10px;
+  background:#19120d; border-bottom:1px solid var(--amber);
+  flex:0 0 auto;
+}
+.ggse-jrnl-root .ggse-toolbar button {
+  display:inline-flex; align-items:center; gap:6px;
+  background:transparent; color:var(--amber-b);
+  border:1px solid var(--amber); border-radius:4px;
+  padding:5px 12px; font-size:13px; cursor:pointer; line-height:1;
+}
+.ggse-jrnl-root .ggse-toolbar button:hover { background:var(--amber); color:#19120d; }
+.ggse-jrnl-root .ggse-toolbar button i { font-size:13px; }
+
+.ggse-jrnl-root .ggse-scroll {
+  flex:1 1 auto; overflow-y:auto; padding:20px 16px 32px;
+}
+
+/* Hoja de pergamino centrada, tipografía del tomo. */
+.ggse-jrnl-root .ggse-jrnl-screen {
+  max-width:760px; margin:0 auto; background:var(--paper); color:var(--ink);
+  font-family:"Cormorant Garamond", Georgia, serif; font-size:15px; line-height:1.55;
+  padding:30px 40px 40px; border-radius:4px;
+  box-shadow:0 4px 26px rgba(0,0,0,0.4);
+}
+
+/* En pantalla no hay corte por página: separo capítulos con un filete. */
+.ggse-jrnl-root .ggse-chapter + .ggse-chapter {
+  border-top:1px solid var(--rule); margin-top:22px; padding-top:8px;
+}
+
+/* Repito las reglas estructurales del tomo que viven en JOURNAL_CSS, acotadas al
+   visor, para que la vista en pantalla se lea igual que el PDF sin inyectar el
+   documento de imprenta completo. */
+.ggse-jrnl-screen .ggse-cover { text-align:center; padding:6px 0 8px; margin-bottom:6px;
+  border-bottom:2.5px solid var(--amber-b); }
+.ggse-jrnl-screen .ggse-cover .kicker { font-family:"Cinzel", Georgia, serif; font-size:11px;
+  letter-spacing:0.28em; text-transform:uppercase; color:var(--amber); }
+.ggse-jrnl-screen .ggse-cover h1 { font-family:"Cinzel", Georgia, serif; font-size:32px;
+  font-weight:700; margin:6px 0 4px; line-height:1.1; }
+.ggse-jrnl-screen .ggse-cover .meta { font-size:13px; font-style:italic; color:var(--dim); }
+.ggse-jrnl-screen .ggse-orn { color:var(--amber); font-size:16px; margin:6px 0; letter-spacing:0.3em; }
+
+.ggse-jrnl-screen .ggse-toc { margin:16px auto 4px; max-width:520px; }
+.ggse-jrnl-screen .ggse-toc h2 { font-family:"Cinzel", Georgia, serif; font-size:13px;
+  letter-spacing:0.16em; text-transform:uppercase; color:var(--wine); text-align:center;
+  border:0; margin:0 0 6px; }
+.ggse-jrnl-screen .ggse-toc ol { list-style:none; margin:0; padding:0; }
+.ggse-jrnl-screen .ggse-toc li { padding:3px 0; border-bottom:1px dotted var(--rule); }
+.ggse-jrnl-screen .ggse-toc li.lvl-2 { padding-left:16px; font-size:13px; color:var(--dim); }
+.ggse-jrnl-screen .ggse-toc li.lvl-3 { padding-left:32px; font-size:12px; color:var(--dim); }
+
+.ggse-jrnl-screen .ggse-chapter-title { font-family:"Cinzel", Georgia, serif; font-size:22px;
+  font-weight:700; color:var(--wine); text-align:center; margin:16px 0 3px; }
+.ggse-jrnl-screen .ggse-chapter-title::after { content:""; display:block; width:70px; height:2px;
+  background:var(--amber-b); margin:8px auto 14px; }
+
+.ggse-jrnl-screen .ggse-body { text-align:justify; hyphens:auto; }
+.ggse-jrnl-screen .ggse-body > p:first-of-type::first-letter {
+  font-family:"Cinzel", Georgia, serif; float:left; font-size:52px; line-height:0.82;
+  padding:4px 8px 0 0; color:var(--amber); font-weight:700; }
+.ggse-jrnl-screen .ggse-body p { margin:0 0 8px; }
+.ggse-jrnl-screen .ggse-body p + p { text-indent:1.1em; }
+.ggse-jrnl-screen .ggse-body h1, .ggse-jrnl-screen .ggse-body h2 { font-family:"Cinzel", Georgia, serif;
+  font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--wine);
+  border-bottom:1px solid var(--rule); padding-bottom:2px; margin:14px 0 6px; }
+.ggse-jrnl-screen .ggse-body h3 { font-family:"Cinzel", Georgia, serif; font-size:13px;
+  color:var(--amber); margin:10px 0 3px; }
+.ggse-jrnl-screen .ggse-body h4 { font-family:"Cinzel", Georgia, serif; font-size:11px;
+  letter-spacing:0.08em; text-transform:uppercase; color:var(--dim); margin:8px 0 2px; }
+.ggse-jrnl-screen .ggse-body ul, .ggse-jrnl-screen .ggse-body ol { margin:6px 0 10px 22px; }
+.ggse-jrnl-screen .ggse-body li { margin:2px 0; }
+.ggse-jrnl-screen .ggse-body blockquote { border-left:3px solid var(--amber-b); margin:10px 0;
+  padding:2px 0 2px 14px; font-style:italic; color:var(--dim); }
+.ggse-jrnl-screen .ggse-body hr { width:38%; margin:16px auto; border:0; border-top:1px solid var(--rule); }
+.ggse-jrnl-screen .ggse-body table { width:100%; border-collapse:collapse; font-size:14px; margin:10px 0; }
+.ggse-jrnl-screen .ggse-body thead th, .ggse-jrnl-screen .ggse-body thead td {
+  font-family:"Cinzel", Georgia, serif; font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--dim); text-align:left; border-bottom:2px solid var(--rule); padding:4px 6px; }
+.ggse-jrnl-screen .ggse-body tbody td, .ggse-jrnl-screen .ggse-body tbody th {
+  padding:4px 6px; border-bottom:1px solid #eee4d2; vertical-align:top; }
+.ggse-jrnl-screen .ggse-body tbody tr:nth-child(even) { background:#faf6ee; }
+.ggse-jrnl-screen .ggse-body img { max-width:100%; height:auto; display:block; margin:10px auto; }
+.ggse-jrnl-screen .ggse-link { border-bottom:1px dotted var(--amber); color:inherit; }
+
+.ggse-jrnl-screen .ggse-secret { border:1px dashed var(--wine); background:rgba(138,47,63,0.06);
+  border-radius:4px; padding:8px 12px 6px; margin:12px 0; }
+.ggse-jrnl-screen .ggse-secret::before { content:attr(data-ggse-label); display:block;
+  font-family:"Cinzel", Georgia, serif; font-size:10px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--wine); margin-bottom:4px; }
+.ggse-jrnl-screen .ggse-figure { text-align:center; margin:14px 0; }
+.ggse-jrnl-screen .ggse-figure img { max-width:100%; border:1px solid var(--rule); border-radius:3px; }
+.ggse-jrnl-screen .ggse-figure figcaption { font-style:italic; color:var(--dim); font-size:13px; margin-top:6px; }
+.ggse-jrnl-screen .ggse-muted { color:var(--dim); font-style:italic; }

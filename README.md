@@ -96,6 +96,8 @@ Open any character or NPC sheet — you'll see an open-book 📖 icon in the win
 
 > If the print dialog ever fails to open, the module falls back to a pop-up window — allow pop-ups for your Foundry domain in that case.
 
+**Journals too.** The same 📖 icon appears on any Journal Entry (and on right-click in the Journals sidebar). Journals export in their own **tome layout** — cover, auto-generated contents, drop caps, themed tables — to PDF, standalone HTML and Obsidian-ready Markdown (with `@UUID` references turned into `[[wiki-links]]`). GM **secret blocks are left out by default**; a world setting lets you include them.
+
 ## 🔌 Macro API
 
 ```js
@@ -106,6 +108,13 @@ api.open(actor);                 // open the reading view
 await api.exportPdf(actor);      // print/export to PDF
 await api.exportHtml(actor);     // download the standalone .html
 await api.exportMarkdown(actor); // download the .md
+
+// Journals — same three formats, tome style
+const journal = game.journal.getName("Capítulo 18: El Valle de las Cenizas");
+api.openJournal(journal);
+await api.exportJournalPdf(journal);
+await api.exportJournalHtml(journal);
+await api.exportJournalMarkdown(journal);
 ```
 
 ## ✅ Compatibility
@@ -203,6 +212,8 @@ Abrí cualquier ficha de personaje o PNJ: vas a ver un ícono de libro abierto �
 
 > Si el diálogo de impresión no llegara a abrirse, el módulo recurre a una ventana emergente — en ese caso, permití ventanas emergentes para tu dominio de Foundry.
 
+**También journals.** El mismo ícono 📖 aparece en cualquier Journal Entry (y con clic derecho en la barra de Diarios). Los journals se exportan con su **propio estilo de tomo** — portada, índice automático, capitulares, tablas temáticas — a PDF, HTML autónomo y Markdown para Obsidian (con las referencias `@UUID` convertidas en `[[wiki-links]]`). Los **bloques secretos de GM quedan afuera por defecto**; un ajuste de mundo permite incluirlos.
+
 ### 🔌 API para macros
 
 ```js
@@ -213,6 +224,13 @@ api.open(actor);                 // abre el visor
 await api.exportPdf(actor);      // exporta a PDF
 await api.exportHtml(actor);     // descarga el .html autónomo
 await api.exportMarkdown(actor); // descarga el .md
+
+// Journals — los mismos tres formatos, en estilo tomo
+const journal = game.journal.getName("Capítulo 18: El Valle de las Cenizas");
+api.openJournal(journal);
+await api.exportJournalPdf(journal);
+await api.exportJournalHtml(journal);
+await api.exportJournalMarkdown(journal);
 ```
 
 ### ✅ Compatibilidad

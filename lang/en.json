@@ -101,5 +101,11 @@
   "GGSE.HtmlSaved": "HTML sheet for {name} saved.",
   "GGSE.HtmlHint": "The ? circles expand the description of each feature, spell or item. When you print this file, descriptions are hidden and you get the compact sheet.",
   "GGSE.FooterThanks": "Thanks for using GegesVTT",
-  "GGSE.FooterStar": "Found it useful? Leave a"
+  "GGSE.FooterStar": "Found it useful? Leave a",
+  "GGSE.Journal.Untitled": "Untitled journal",
+  "GGSE.Journal.Index": "Contents",
+  "GGSE.Journal.GMOnly": "GM only",
+  "GGSE.Journal.NotExportable": "Page of type \"{type}\" — not exportable to paper.",
+  "GGSE.Journal.SettingSecretsName": "Journals: include GM content",
+  "GGSE.Journal.SettingSecretsHint": "When enabled, secret blocks (GM-only content) are included when exporting journals. Off by default, so exports are safe to share with players."
 }

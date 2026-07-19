@@ -101,5 +101,11 @@
   "GGSE.HtmlSaved": "Ficha HTML de {name} guardada.",
   "GGSE.HtmlHint": "Los círculos ? despliegan la descripción de cada rasgo, conjuro u objeto. Al imprimir este archivo, las descripciones se ocultan y obtenés la ficha compacta.",
   "GGSE.FooterThanks": "Gracias por usar GegesVTT",
-  "GGSE.FooterStar": "¿Te sirvió? Dejá una"
+  "GGSE.FooterStar": "¿Te sirvió? Dejá una",
+  "GGSE.Journal.Untitled": "Journal sin título",
+  "GGSE.Journal.Index": "Índice",
+  "GGSE.Journal.GMOnly": "Solo GM",
+  "GGSE.Journal.NotExportable": "Página de tipo «{type}» — no exportable a papel.",
+  "GGSE.Journal.SettingSecretsName": "Journals: incluir contenido de GM",
+  "GGSE.Journal.SettingSecretsHint": "Si se activa, los bloques secretos (contenido solo para el GM) se incluyen al exportar journals. Por defecto está desactivado, así que la exportación es segura para compartir con los jugadores."
 }
