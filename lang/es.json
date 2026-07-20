@@ -108,6 +108,7 @@
   "GGSE.Journal.NotExportable": "Página de tipo «{type}» — no exportable a papel.",
   "GGSE.Journal.SettingSecretsName": "Journals: incluir contenido de GM",
   "GGSE.Journal.SettingSecretsHint": "Si se activa, los bloques secretos (contenido solo para el GM) se incluyen al exportar journals. Por defecto está desactivado, así que la exportación es segura para compartir con los jugadores.",
+  "GGSE.Cards.Cantrip": "Truco",
   "GGSE.Cards.Button": "Tarjetas de conjuros",
   "GGSE.Cards.Title": "Tarjetas de conjuros",
   "GGSE.Cards.ExportPdf": "Exportar PDF",
@@ -129,5 +130,9 @@
   "GGSE.Cards.Page": "pág.",
   "GGSE.Cards.TableOmitted": "tabla — ver manual",
   "GGSE.Cards.SettingThemeName": "Tarjetas: tema visual",
-  "GGSE.Cards.SettingThemeHint": "Estética de las tarjetas de conjuros. Por ahora hay un solo tema; se sumarán más packs."
+  "GGSE.Cards.SettingThemeHint": "Estética de las tarjetas de conjuros. Por ahora hay un solo tema; se sumarán más packs.",
+  "GGSE.Cards.LvlAbbr": "N",
+  "GGSE.Cards.PerSlot": "Por espacio",
+  "GGSE.Cards.SettingDedupeName": "Tarjetas: fusionar conjuros duplicados",
+  "GGSE.Cards.SettingDedupeHint": "Si se activa, no repite tarjetas de conjuros con el mismo nombre y nivel (útil si el actor tiene copias del mismo conjuro). Por defecto, desactivado."
 }

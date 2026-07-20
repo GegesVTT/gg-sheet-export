@@ -76,29 +76,92 @@ function sourceRef(item) {
   return [book, page].filter(Boolean).join(" ").trim();
 }
 
-/** Mejor esfuerzo para salvación / ataque / daño (labels y, si no, actividades). */
-function combatBits(item) {
-  const L = item.labels ?? {};
-  let save = L.save ?? "";
-  let toHit = L.toHit ?? "";
-  let damage = L.damage ?? L.damages ?? "";
+/** Abreviatura de característica en mayúsculas (DEX, CON…), con fallbacks. */
+function abilityLabel(a) {
+  const e = CONFIG.DND5E?.abilities?.[a];
+  if (!e) return String(a ?? "").toUpperCase();
+  const s = (typeof e === "object" ? (e.abbreviation ?? e.label) : e) ?? a;
+  return String(s).toUpperCase();
+}
 
+/** Lista de características (Set | array | string) → "DEX" o "DEX/CON". */
+function abilityList(ab) {
+  if (!ab) return "";
+  const arr = ab instanceof Set ? [...ab] : (Array.isArray(ab) ? ab : [ab]);
+  return arr.map(abilityLabel).filter(Boolean).join("/");
+}
+
+/** Una parte de daño (DamageData del sistema u objeto de labels) → "8d6 fuego". */
+function partFormula(p) {
+  if (typeof p === "string") return p;
+  if (!p) return "";
+  let f = p.formula || p.custom?.formula || "";
+  if (!f && (p.number || p.denomination)) {
+    f = p.number && p.denomination ? `${p.number}d${p.denomination}` : (p.denomination ? `d${p.denomination}` : `${p.number ?? ""}`);
+    if (p.bonus) f += ` + ${p.bonus}`;
+  }
+  if (!f && p.label) f = p.label;
+  return f;
+}
+
+function partType(p) {
+  if (!p || typeof p === "string") return "";
+  return p.damageType ?? p.type ?? (p.types instanceof Set ? [...p.types][0] : (Array.isArray(p.types) ? p.types[0] : "")) ?? "";
+}
+
+/** Etiqueta de tiempo de lanzamiento reconstruida desde system.activation. */
+function activationLabel(a) {
+  if (!a?.type) return "";
+  const cfg = CONFIG.DND5E?.activityActivationTypes ?? CONFIG.DND5E?.abilityActivationTypes ?? {};
+  const base = cfgLabel(cfg, a.type) || a.type;
+  return a.value && a.value > 1 ? `${a.value} ${base}` : base;
+}
+
+/** Salvación / ataque / daño / escalado. dnd5e 5.x los guarda en actividades:
+ *  la habilidad de salvación es un Set y el daño son objetos con su tipo. */
+function combatBits(item, level) {
+  const L = item.labels ?? {};
   const acts = item.system?.activities;
   const first = acts?.contents?.[0] ?? (acts ? [...acts][0] : null);
-  if (first?.labels) {
-    toHit ||= first.labels.toHit ?? "";
-    damage ||= first.labels.damage ?? "";
+
+  // Ataque: el label del sistema ya viene como "+7".
+  const toHit = (typeof first?.labels?.toHit === "string" && first.labels.toHit)
+    || (typeof L.toHit === "string" ? L.toHit : "") || "";
+
+  // Salvación: CD + característica (Set → "DEX").
+  let save = "";
+  const sv = first?.save ?? item.system?.save;
+  if (sv) {
+    const dc = sv.dc?.value ?? (typeof sv.dc === "number" ? sv.dc : null);
+    const ab = abilityList(sv.ability);
+    if (dc) save = `${loc("GGSE.Cards.DC")} ${dc}${ab ? " " + ab : ""}`;
   }
-  if (!save && first?.save) {
-    const dc = first.save.dc?.value ?? first.save.dc;
-    const ab = first.save.ability;
-    const abLabel = Array.isArray(ab)
-      ? ab.map((a) => cfgLabel(CONFIG.DND5E?.abilities, a)).join("/")
-      : cfgLabel(CONFIG.DND5E?.abilities, ab);
-    if (dc) save = `${loc("GGSE.Cards.DC")} ${dc} ${abLabel}`.trim();
+  if (!save && typeof L.save === "string") save = L.save;
+
+  // Daño: fórmula + tipo por parte (el ícono sale del tipo, el texto de la desc).
+  let parts = first?.damage?.parts ?? first?.system?.damage?.parts ?? null;
+  if (!Array.isArray(parts) || !parts.length) {
+    parts = Array.isArray(L.damages) ? L.damages : (Array.isArray(L.damage) ? L.damage : null);
   }
-  if (Array.isArray(damage)) damage = damage.join(" + ");
-  return { save, toHit, damage: typeof damage === "string" ? damage : "" };
+  const damageParts = Array.isArray(parts)
+    ? parts.map((p) => ({ formula: partFormula(p), type: partType(p) })).filter((d) => d.formula)
+    : (typeof L.damage === "string" && L.damage ? [{ formula: L.damage, type: "" }] : []);
+
+  // Escalado. Trucos: dados por nivel de personaje (N5/N11/N17). Conjuros con
+  // nivel: incremento por espacio si el sistema lo expone.
+  let scaling = null;
+  const base = damageParts[0]?.formula || "";
+  const m = /^(\d+)d(\d+)$/.exec(base);
+  if (level === 0 && m) {
+    const n = +m[1], x = m[2];
+    scaling = { cantrip: [2, 3, 4].map((t) => `${n * t}d${x}`) };
+  } else if (level > 0 && Array.isArray(parts) && parts[0]) {
+    const sc = parts[0].scaling ?? parts[0].system?.scaling;
+    const f = sc?.formula || (sc?.number && m ? `${sc.number}d${m[2]}` : "");
+    if (f) scaling = { upcast: f };
+  }
+
+  return { save, toHit, damageParts, scaling };
 }
 
 export async function extractSpellCards(actor) {
@@ -114,13 +177,16 @@ export async function extractSpellCards(actor) {
     const level = Number(sd.level ?? 0);
     const schoolKey = sd.school ?? "";
 
-    // Componentes: "V, S, M" del label o reconstruido desde properties.
+    // Componentes: "V, S, M" del label, o reconstruido desde properties (5.x)
+    // o desde el objeto system.components (formato viejo / imports SRD).
     let components = L.components?.vsm ?? (typeof L.components === "string" ? L.components : "");
     if (!components) {
+      const legacy = sd.components ?? {};
+      const has = (k, lk) => props.includes(k) || legacy[lk];
       components = [
-        props.includes("vocal") ? "V" : null,
-        props.includes("somatic") ? "S" : null,
-        props.includes("material") ? "M" : null
+        has("vocal", "vocal") ? "V" : null,
+        has("somatic", "somatic") ? "S" : null,
+        has("material", "material") ? "M" : null
       ].filter(Boolean).join(", ");
     }
 
@@ -132,22 +198,30 @@ export async function extractSpellCards(actor) {
       descHTML = sanitizeCardDesc(raw);
     }
 
-    const { save, toHit, damage } = combatBits(s);
+    const { save, toHit, damageParts, scaling } = combatBits(s, level);
+
+    // Algunos conjuros (p.ej. Counterspell en 5.x) traen el tiempo de
+    // lanzamiento en la actividad, no en el item → fallbacks encadenados.
+    const acts = sd.activities;
+    const firstAct = acts?.contents?.[0] ?? (acts ? [...acts][0] : null);
+    const activation = L.activation || firstAct?.labels?.activation || activationLabel(sd.activation) || "—";
+    const range = L.range || firstAct?.labels?.range || "—";
+    const duration = L.duration || firstAct?.labels?.duration || "—";
 
     return {
       name: s.name,
       level,
-      levelLabel: level === 0 ? loc("GGSE.Cantrips") : `${loc("GGSE.Level")} ${level}`,
+      levelLabel: level === 0 ? loc("GGSE.Cards.Cantrip") : `${loc("GGSE.Level")} ${level}`,
       school: cfgLabel(C.spellSchools, schoolKey),
       schoolColor: SCHOOL_COLORS[schoolKey] ?? "var(--card-amber)",
-      activation: L.activation || "—",
-      range: L.range || "—",
-      duration: L.duration || "—",
+      activation,
+      range,
+      duration,
       components: components || "—",
       material: sd.materials?.value ?? "",
       concentration: props.includes("concentration") || !!sd.duration?.concentration,
       ritual: props.includes("ritual"),
-      save, toHit, damage,
+      save, toHit, damageParts, scaling,
       descHTML,
       sourceRef: sourceRef(s)
     };
@@ -155,14 +229,28 @@ export async function extractSpellCards(actor) {
 
   spells.sort((a, b) => (a.level - b.level) || a.name.localeCompare(b.name, game.i18n.lang));
 
+  // Deduplicado opcional (mismo nombre + nivel), apagado por defecto.
+  let outSpells = spells;
+  try {
+    if (game.settings.get("gg-sheet-export", "spellCardDedupe")) {
+      const seen = new Set();
+      outSpells = spells.filter((s) => {
+        const k = `${s.level}|${(s.name || "").toLowerCase()}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+  } catch (e) { /* ajuste no registrado: sin deduplicado */ }
+
   const spellDC = attrs.spelldc ?? actor.system?.attributes?.spell?.dc ?? null;
 
   return {
     actorName: actor.name,
     spellDC,
     spellAtk: spellDC ? spellDC - 8 : null,
-    spellCount: spells.length,
-    spells,
+    spellCount: outSpells.length,
+    spells: outSpells,
     exportDate: new Date().toLocaleDateString(game.i18n.lang || "es")
   };
 }

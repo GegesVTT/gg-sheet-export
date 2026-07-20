@@ -108,6 +108,7 @@
   "GGSE.Journal.NotExportable": "Page of type \"{type}\" — not exportable to paper.",
   "GGSE.Journal.SettingSecretsName": "Journals: include GM content",
   "GGSE.Journal.SettingSecretsHint": "When enabled, secret blocks (GM-only content) are included when exporting journals. Off by default, so exports are safe to share with players.",
+  "GGSE.Cards.Cantrip": "Cantrip",
   "GGSE.Cards.Button": "Spell cards",
   "GGSE.Cards.Title": "Spell cards",
   "GGSE.Cards.ExportPdf": "Export PDF",
@@ -129,5 +130,9 @@
   "GGSE.Cards.Page": "p.",
   "GGSE.Cards.TableOmitted": "table — see manual",
   "GGSE.Cards.SettingThemeName": "Cards: visual theme",
-  "GGSE.Cards.SettingThemeHint": "Look of the spell cards. Only one theme for now; more packs coming."
+  "GGSE.Cards.SettingThemeHint": "Look of the spell cards. Only one theme for now; more packs coming.",
+  "GGSE.Cards.LvlAbbr": "L",
+  "GGSE.Cards.PerSlot": "Per slot",
+  "GGSE.Cards.SettingDedupeName": "Cards: merge duplicate spells",
+  "GGSE.Cards.SettingDedupeHint": "When enabled, spells with the same name and level are not repeated (useful if the actor has duplicate copies). Off by default."
 }

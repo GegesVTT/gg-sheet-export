@@ -487,6 +487,16 @@ Hooks.once("init", () => {
     choices: { cronicas: "Crónicas Bárdicas" },
     default: "cronicas"
   });
+
+  // Fusionar conjuros duplicados (mismo nombre + nivel). Apagado por defecto.
+  game.settings.register(MODULE_ID, "spellCardDedupe", {
+    name: "GGSE.Cards.SettingDedupeName",
+    hint: "GGSE.Cards.SettingDedupeHint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
 });
 
 /* ---------- API pública ---------- */
