@@ -10,7 +10,7 @@ import { extractJournalData } from "./extract-journal.mjs";
 import { journalToMarkdown } from "./journal-markdown.mjs";
 import { buildJournalPrintHTML, buildJournalStandaloneHTML, buildJournalBody } from "./journal-print.mjs";
 import { extractSpellCards } from "./extract-spellcards.mjs";
-import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards } from "./spellcards-print.mjs";
+import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards, THEMES, registerCardTheme } from "./spellcards-print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
 const SUPPORTED_TYPES = ["character", "npc"];
@@ -465,7 +465,7 @@ Hooks.on("getActorDirectoryEntryContext", (html, options) => {
   });
 });
 
-/* ---------- ajustes ---------- */
+/* ---------- init: ajustes + API pública ---------- */
 
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "journalIncludeSecrets", {
@@ -477,14 +477,16 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // Tema de las tarjetas de conjuros. Hoy uno solo; queda listo para sumar packs.
+  // Tema de las tarjetas. Las choices se arman desde el registro de themes y
+  // se refrescan cuando un módulo satélite registra el suyo (registerCardTheme).
+  const themeChoices = () => Object.fromEntries(Object.values(THEMES).map((t) => [t.id, t.name]));
   game.settings.register(MODULE_ID, "spellCardTheme", {
     name: "GGSE.Cards.SettingThemeName",
     hint: "GGSE.Cards.SettingThemeHint",
     scope: "world",
     config: true,
     type: String,
-    choices: { cronicas: "Crónicas Bárdicas" },
+    choices: themeChoices(),
     default: "cronicas"
   });
 
@@ -497,11 +499,8 @@ Hooks.once("init", () => {
     type: Boolean,
     default: false
   });
-});
 
-/* ---------- API pública ---------- */
-
-Hooks.once("init", () => {
+  // API pública.
   const mod = game.modules.get(MODULE_ID);
   if (mod) {
     mod.api = {
@@ -514,7 +513,17 @@ Hooks.once("init", () => {
       exportJournalHtml,
       exportJournalMarkdown,
       openSpellCards: openSpellCardsViewer,
-      exportSpellCards: exportSpellCardsPdf
+      exportSpellCards: exportSpellCardsPdf,
+      /** Para packs de themes (módulos satélite). Ver esquema en spellcards-print.mjs */
+      registerCardTheme: (theme) => {
+        const ok = registerCardTheme(theme);
+        if (ok) {
+          // refrescar las opciones del selector ya registrado
+          const s = game.settings.settings.get(`${MODULE_ID}.spellCardTheme`);
+          if (s) s.choices = themeChoices();
+        }
+        return ok;
+      }
     };
   }
   console.log(`${MODULE_ID} | GG Sheet Export listo — sistema: ${game.system.id} (GegesVTT)`);

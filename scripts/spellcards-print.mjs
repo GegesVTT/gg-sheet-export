@@ -54,7 +54,9 @@ export const THEMES = {
   cronicas: {
     id: "cronicas",
     name: "Crónicas Bárdicas",
+    schemaVersion: 1,
     watermark: LOGO_WATERMARK,
+    fontImports: ["https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap"],
     vars: {
       "--card-ink": "#241a12", "--card-amber": "#a06914", "--card-amber-b": "#e0a23c",
       "--card-wine": "#8a2f3f", "--card-rule": "#c9b99a", "--card-dim": "#6f6151",
@@ -65,10 +67,38 @@ export const THEMES = {
   }
 };
 
+export const THEME_SCHEMA_VERSION = 1;
+
+/**
+ * Registra un theme de tarjetas desde otro módulo (packs premium/satélite).
+ * Esquema (v1): { id, name, vars?, watermark?, fontImports?, fontCSS?, customCSS? }
+ * - vars: variables CSS (--card-*); lo no definido hereda de "cronicas".
+ * - watermark: data-URL o ruta de imagen; "" o null = sin marca de agua.
+ * - fontImports: array de URLs de hojas de fuentes (se emiten como @import).
+ * - fontCSS: @font-face crudo (ideal: woff2 en base64 → funciona sin red).
+ * - customCSS: CSS extra acotado a .ggse-cards para retoques del pack.
+ * Uso: game.modules.get("gg-sheet-export").api.registerCardTheme({...})
+ */
+export function registerCardTheme(theme) {
+  if (!theme?.id || !theme?.name) {
+    console.warn("gg-sheet-export | registerCardTheme: falta id o name", theme);
+    return false;
+  }
+  THEMES[theme.id] = {
+    schemaVersion: THEME_SCHEMA_VERSION,
+    ...theme,
+    vars: { ...THEMES.cronicas.vars, ...(theme.vars ?? {}) },
+    watermark: theme.watermark === undefined ? THEMES.cronicas.watermark : theme.watermark
+  };
+  console.log(`gg-sheet-export | theme de tarjetas registrado: ${theme.id} (${theme.name})`);
+  return true;
+}
+
 export function themeStyle(themeId = "cronicas") {
   const t = THEMES[themeId] ?? THEMES.cronicas;
+  const imports = (t.fontImports ?? []).map((u) => `@import url("${u}");`).join("\n");
   const vars = Object.entries(t.vars).map(([k, v]) => `${k}:${v};`).join("");
-  return `.ggse-cards{${vars}}`;
+  return `${imports}\n${t.fontCSS ?? ""}\n.ggse-cards{${vars}}\n${t.customCSS ?? ""}`;
 }
 
 /* ---------- CSS de tarjeta (compartido pantalla + impresión) ---------- */
@@ -315,7 +345,6 @@ export function buildCardsPrintHTML(data, themeId = "cronicas") {
 <meta charset="utf-8">
 <title>${esc(data.actorName)} — ${loc("GGSE.Cards.Title")}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
 <style>
 ${themeStyle(themeId)}
 ${CARDS_CSS}

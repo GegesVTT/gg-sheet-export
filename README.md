@@ -124,6 +124,33 @@ api.openSpellCards(pc);
 await api.exportSpellCards(pc);
 ```
 
+## 🎨 Card themes
+
+Spell cards ship with a theme system. Pick a look under **Settings → Module Settings → GG Sheet Export → "Cards: visual theme"**. The base theme (**Crónicas Bárdicas**) is always available.
+
+**Installing more themes:** theme packs are small companion modules. Install a pack the same way as any module (paste its manifest URL in *Install Module*, or find it in the browser), enable it, and it appears automatically in the theme dropdown. Packs only change the look — the engine stays the same, so themes never gate features.
+
+Free packs: **Ink Saver** (black & white, printer-friendly). More coming.
+
+**Building a theme pack (devs):** a pack is a module that registers itself in the `setup` hook:
+
+```js
+Hooks.once("setup", () => {
+  const api = game.modules.get("gg-sheet-export")?.api;
+  api?.registerCardTheme({
+    id: "my-theme",
+    name: "My Theme",
+    vars: { "--card-ink": "#1a1a1a", "--card-amber": "#8a2f3f" /* … inherits the rest */ },
+    watermark: null,          // data-URL / path, or null
+    fontImports: [],          // Google Fonts URLs, or…
+    fontCSS: "",              // …embedded @font-face (base64) for offline use
+    customCSS: ".ggse-cards .ggse-front { /* scoped tweaks */ }"
+  });
+});
+```
+
+Only use fonts whose license allows embedding/redistribution (OFL, etc.). Declare `requires: gg-sheet-export` (min 1.8.0) in your pack's manifest.
+
 ## ✅ Compatibility
 
 - Foundry VTT **v12–v13**.
@@ -246,6 +273,33 @@ const pc = game.actors.getName("Rahegal");
 api.openSpellCards(pc);
 await api.exportSpellCards(pc);
 ```
+
+### 🎨 Temas de tarjetas
+
+Las tarjetas tienen un sistema de temas. Elegí el look en **Configuración → Ajustes del módulo → GG Sheet Export → "Tarjetas: tema visual"**. El tema base (**Crónicas Bárdicas**) siempre está disponible.
+
+**Instalar más temas:** los packs son módulos complementarios chiquitos. Instalás un pack como cualquier módulo (pegás su manifest URL en *Instalar módulo*, o lo buscás en el navegador), lo activás, y aparece solo en el selector de temas. Los packs cambian solo la estética — el motor es el mismo, así que un tema nunca bloquea funciones.
+
+Packs gratis: **Ink Saver** (blanco y negro, ahorra tinta). Más en camino.
+
+**Crear un pack (devs):** un pack es un módulo que se registra en el hook `setup`:
+
+```js
+Hooks.once("setup", () => {
+  const api = game.modules.get("gg-sheet-export")?.api;
+  api?.registerCardTheme({
+    id: "mi-theme",
+    name: "Mi Theme",
+    vars: { "--card-ink": "#1a1a1a", "--card-amber": "#8a2f3f" /* … hereda el resto */ },
+    watermark: null,          // data-URL / ruta, o null
+    fontImports: [],          // URLs de Google Fonts, o…
+    fontCSS: "",              // …@font-face embebido (base64) para uso sin red
+    customCSS: ".ggse-cards .ggse-front { /* retoques acotados */ }"
+  });
+});
+```
+
+Usá solo fuentes cuya licencia permita embeber/redistribuir (OFL, etc.). Declará `requires: gg-sheet-export` (min 1.8.0) en el manifest del pack.
 
 ### ✅ Compatibilidad
 
