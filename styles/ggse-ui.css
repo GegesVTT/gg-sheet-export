@@ -1,0 +1,106 @@
+/* GG Sheet Export — GegesVTT UI kit (ggse-ui)
+ * Identidad visual compartida de los módulos: marco art nouveau élfico, barra de
+ * íconos circulares, divisor de rombo, tiles. CSS puro con micro-interacciones.
+ * Todo va acotado a .ggse-ui para no filtrar estilos a Foundry.
+ * Tipografía de títulos: Uncial Antiqua (OFL). Cuerpo: Cormorant Garamond. */
+
+@import url("https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap");
+
+.ggse-ui {
+  --roble:#19120d; --roble2:#241a12; --roble3:#2e2216;
+  --ambar:#e0a23c; --ambar-d:#a06914; --ambar-l:#f0c675;
+  --vino:#8a2f3f; --vino-l:#b0704a;
+  --bronce:#6e5327; --bronce-l:#9a7433;
+  --rule:#5a4a34; --parch:#fbf7ee; --ink:#241a12; --dim:#b8a789;
+  --g-title:"Uncial Antiqua", Georgia, serif;
+  --g-body:"Cormorant Garamond", Georgia, serif;
+  color:#efe4cf; font-family:var(--g-body);
+}
+
+/* ---- marco octagonal art nouveau ---- */
+.ggse-ui .ggse-frame {
+  position:relative;
+  background:
+    radial-gradient(130% 80% at 50% 0%, rgba(224,162,60,0.06), transparent 60%),
+    linear-gradient(180deg, #221913 0%, #1b130c 100%);
+  border:1px solid var(--bronce); border-radius:0;
+  box-shadow:0 0 0 2px #120c07, 0 0 0 3px var(--bronce), 0 0 0 6px #120c07,
+    inset 0 0 60px rgba(0,0,0,0.5);
+  padding:26px 30px;
+  clip-path:polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px),
+    calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
+}
+.ggse-ui .ggse-frame::before {
+  content:""; position:absolute; inset:9px; border:1px solid rgba(154,116,51,0.5);
+  clip-path:polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px),
+    calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); pointer-events:none;
+}
+
+/* esquinas geométricas (rombo + espiga hacia el centro) */
+.ggse-ui .ggse-corner { position:absolute; width:34px; height:34px; opacity:0.95; pointer-events:none; }
+.ggse-ui .ggse-corner::before { content:""; position:absolute; width:34px; height:34px;
+  border-color:var(--ambar); border-style:solid; border-width:0; }
+.ggse-ui .ggse-corner::after { content:""; position:absolute; width:6px; height:6px;
+  background:var(--ambar); transform:rotate(45deg); }
+.ggse-ui .ggse-corner > i { position:absolute; background:var(--ambar-d); }
+.ggse-ui .ggse-corner.tl { top:14px; left:14px; }
+.ggse-ui .ggse-corner.tl::before { border-top-width:2px; border-left-width:2px; }
+.ggse-ui .ggse-corner.tl::after { top:6px; left:6px; }
+.ggse-ui .ggse-corner.tl > i { top:0; left:34px; width:16px; height:2px; }
+.ggse-ui .ggse-corner.tr { top:14px; right:14px; }
+.ggse-ui .ggse-corner.tr::before { border-top-width:2px; border-right-width:2px; }
+.ggse-ui .ggse-corner.tr::after { top:6px; right:6px; }
+.ggse-ui .ggse-corner.tr > i { top:0; right:34px; width:16px; height:2px; }
+.ggse-ui .ggse-corner.bl { bottom:14px; left:14px; }
+.ggse-ui .ggse-corner.bl::before { border-bottom-width:2px; border-left-width:2px; }
+.ggse-ui .ggse-corner.bl::after { bottom:6px; left:6px; }
+.ggse-ui .ggse-corner.bl > i { bottom:0; left:34px; width:16px; height:2px; }
+.ggse-ui .ggse-corner.br { bottom:14px; right:14px; }
+.ggse-ui .ggse-corner.br::before { border-bottom-width:2px; border-right-width:2px; }
+.ggse-ui .ggse-corner.br::after { bottom:6px; right:6px; }
+.ggse-ui .ggse-corner.br > i { bottom:0; right:34px; width:16px; height:2px; }
+
+/* ---- cabecera ---- */
+.ggse-ui .ggse-head { text-align:center; padding:4px 0 2px; }
+.ggse-ui .ggse-kicker { font-family:var(--g-title); font-size:10px; letter-spacing:0.28em;
+  text-transform:uppercase; color:var(--ambar); display:flex; align-items:center;
+  justify-content:center; gap:12px; }
+.ggse-ui .ggse-kicker::before, .ggse-ui .ggse-kicker::after { content:""; height:1px; width:46px;
+  background:linear-gradient(90deg, transparent, var(--ambar-d)); }
+.ggse-ui .ggse-kicker::after { background:linear-gradient(90deg, var(--ambar-d), transparent); }
+.ggse-ui .ggse-title { font-family:var(--g-title); font-size:20px; margin:9px 0 2px; color:#f4e6c8;
+  text-shadow:0 1px 0 #000; }
+.ggse-ui .ggse-sub { font-size:14px; font-style:italic; color:var(--dim); }
+
+/* ---- barra de íconos circulares (firma) ---- */
+.ggse-ui .ggse-iconbar { display:flex; justify-content:center; gap:12px; margin:16px 0 6px; }
+.ggse-ui .ggse-ibtn { width:46px; height:46px; border-radius:50%; cursor:pointer; position:relative;
+  background:radial-gradient(circle at 50% 35%, #33261a, #17100a); border:1.5px solid var(--bronce-l);
+  display:flex; align-items:center; justify-content:center; color:var(--ambar-l);
+  box-shadow:inset 0 1px 2px rgba(255,220,150,0.12), inset 0 -3px 6px rgba(0,0,0,0.6);
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, color .16s ease; }
+.ggse-ui .ggse-ibtn > i { font-size:20px; line-height:1; }
+.ggse-ui .ggse-ibtn:hover { transform:translateY(-2px); border-color:var(--ambar);
+  box-shadow:0 0 0 2px rgba(224,162,60,0.25), 0 0 14px rgba(224,162,60,0.4),
+    inset 0 -3px 6px rgba(0,0,0,0.6); }
+.ggse-ui .ggse-ibtn.active { border-color:var(--ambar); color:#19120d;
+  background:radial-gradient(circle at 50% 35%, var(--ambar-l), var(--ambar-d));
+  box-shadow:0 0 0 2px rgba(224,162,60,0.3), 0 0 16px rgba(224,162,60,0.45); }
+
+/* ---- divisor de rombo ---- */
+.ggse-ui .ggse-divider { display:flex; align-items:center; gap:14px; margin:20px 2px 16px; }
+.ggse-ui .ggse-divider::before, .ggse-ui .ggse-divider::after { content:""; flex:1; height:1px;
+  background:linear-gradient(90deg, transparent, var(--rule) 30%, var(--rule) 70%, transparent); }
+.ggse-ui .ggse-gem { width:9px; height:9px; background:var(--ambar); transform:rotate(45deg);
+  box-shadow:0 0 0 3px rgba(110,83,39,0.5), 0 0 8px rgba(224,162,60,0.5); }
+
+/* ---- botones cápsula ---- */
+.ggse-ui .ggse-cap { font-family:var(--g-title); font-size:12px; letter-spacing:0.04em;
+  padding:9px 20px; border-radius:22px; cursor:pointer; transition:all .16s ease; border:1px solid var(--rule);
+  background:transparent; color:var(--dim); }
+.ggse-ui .ggse-cap:hover { color:var(--ambar-l); border-color:var(--ambar-d); }
+.ggse-ui .ggse-cap.primary { color:#1c1409; border-color:var(--ambar-l);
+  background:linear-gradient(180deg, var(--ambar-l), var(--ambar-d));
+  box-shadow:0 0 0 1px #120c07, inset 0 1px 1px rgba(255,240,200,0.5); }
+.ggse-ui .ggse-cap.primary:hover { transform:translateY(-1px);
+  box-shadow:0 0 0 1px #120c07, 0 0 16px rgba(224,162,60,0.5), inset 0 1px 1px rgba(255,240,200,0.6); }

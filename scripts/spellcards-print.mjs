@@ -101,6 +101,47 @@ export function themeStyle(themeId = "cronicas") {
   return `${imports}\n${t.fontCSS ?? ""}\n.ggse-cards{${vars}}\n${t.customCSS ?? ""}`;
 }
 
+/** Arma las tiles del selector: cada una es una mini-carta con la paleta real
+ *  del theme, más su estado (actual / gratis / premium con CTA de compra). */
+export function buildThemeTiles(currentId = "cronicas") {
+  return Object.values(THEMES).map((t) => {
+    const v = t.vars || {};
+    const paper = v["--card-paper"] || "#fbf7ee";
+    const ink = v["--card-ink"] || "#241a12";
+    const bar = v["--card-amber-b"] || "#e0a23c";
+    const sub = v["--card-wine"] || "#8a2f3f";
+    const line = v["--card-dim"] || "#8a7a5c";
+    const isCurrent = t.id === currentId;
+    const premium = !!t.premium;
+    const soon = !!t.soon;
+    const locked = premium || soon;
+
+    let badge = loc("GGSE.Cards.BadgeFree"), badgeCls = "free";
+    if (isCurrent) { badge = loc("GGSE.Cards.BadgeCurrent"); badgeCls = "now"; }
+    else if (premium) { badge = loc("GGSE.Cards.BadgePremium"); badgeCls = "pro"; }
+    else if (soon) { badge = loc("GGSE.Cards.BadgeSoon"); badgeCls = "pro"; }
+
+    const overlay = premium
+      ? `<div class="ggse-buy"><span class="cta" data-buy="${esc(t.buyUrl || "")}">${loc("GGSE.Cards.Buy")}</span></div>`
+      : (soon ? `<div class="ggse-buy soon"><span class="cta">${loc("GGSE.Cards.BadgeSoon")}</span></div>` : "");
+
+    return `<div class="ggse-tile ${isCurrent ? "sel" : ""}" data-theme="${esc(t.id)}" data-locked="${locked}">
+      <span class="ggse-check">✓</span>
+      <div class="ggse-swatch ${locked ? "locked" : ""}" style="background:${esc(paper)}; color:${esc(ink)}">
+        ${overlay}
+        <div class="bar" style="background:${esc(bar)}"></div>
+        <div class="body">
+          <div class="sname" style="color:${esc(ink)}">${loc("GGSE.Cards.SampleSpell")}</div>
+          <div class="slvl" style="color:${esc(sub)}">${loc("GGSE.Level")} 3 · ${loc("GGSE.Cards.SampleSchool")}</div>
+          <div class="line" style="background:${esc(line)}"></div>
+          <div class="line" style="background:${esc(line)}; width:80%"></div>
+        </div>
+      </div>
+      <div class="ggse-tname">${esc(t.name)} <span class="ggse-badge ${badgeCls}">${esc(badge)}</span></div>
+    </div>`;
+  }).join("");
+}
+
 /* ---------- CSS de tarjeta (compartido pantalla + impresión) ---------- */
 export const CARDS_CSS = `
 .ggse-cards { color:var(--card-ink); }

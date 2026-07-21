@@ -134,5 +134,18 @@
   "GGSE.Cards.LvlAbbr": "L",
   "GGSE.Cards.PerSlot": "Per slot",
   "GGSE.Cards.SettingDedupeName": "Cards: merge duplicate spells",
-  "GGSE.Cards.SettingDedupeHint": "When enabled, spells with the same name and level are not repeated (useful if the actor has duplicate copies). Off by default."
+  "GGSE.Cards.SettingDedupeHint": "When enabled, spells with the same name and level are not repeated (useful if the actor has duplicate copies). Off by default.",
+  "GGSE.Cards.ThemeButton": "Theme",
+  "GGSE.Cards.ThemePickerTitle": "Card themes",
+  "GGSE.Cards.ThemePickerSub": "Choose the look of your spell cards",
+  "GGSE.Cards.Cancel": "Cancel",
+  "GGSE.Cards.ApplyTheme": "Apply theme",
+  "GGSE.Cards.ThemeApplied": "Card theme updated.",
+  "GGSE.Cards.BadgeCurrent": "Current",
+  "GGSE.Cards.BadgeFree": "Free",
+  "GGSE.Cards.BadgePremium": "Premium",
+  "GGSE.Cards.BadgeSoon": "Soon",
+  "GGSE.Cards.Buy": "Buy · Patreon",
+  "GGSE.Cards.SampleSpell": "Fireball",
+  "GGSE.Cards.SampleSchool": "Evocation"
 }

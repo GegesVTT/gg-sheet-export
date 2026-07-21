@@ -10,7 +10,7 @@ import { extractJournalData } from "./extract-journal.mjs";
 import { journalToMarkdown } from "./journal-markdown.mjs";
 import { buildJournalPrintHTML, buildJournalStandaloneHTML, buildJournalBody } from "./journal-print.mjs";
 import { extractSpellCards } from "./extract-spellcards.mjs";
-import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards, THEMES, registerCardTheme } from "./spellcards-print.mjs";
+import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards, THEMES, registerCardTheme, buildThemeTiles } from "./spellcards-print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
 const SUPPORTED_TYPES = ["character", "npc"];
@@ -307,7 +307,7 @@ class GGSpellCardsViewer extends HandlebarsApplicationMixin(ApplicationV2) {
     tag: "div",
     window: { icon: "fa-solid fa-wand-sparkles", resizable: true, contentClasses: ["ggse-content"] },
     position: { width: 900, height: 900 },
-    actions: { ggseCardsPdf: GGSpellCardsViewer.#onExportPdf }
+    actions: { ggseCardsPdf: GGSpellCardsViewer.#onExportPdf, ggseCardsTheme: GGSpellCardsViewer.#onTheme }
   };
 
   static PARTS = {
@@ -333,10 +333,75 @@ class GGSpellCardsViewer extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onExportPdf() { await exportSpellCardsPdf(this.actor); }
+  static #onTheme() { openThemePicker(); }
 }
 
 function openSpellCardsViewer(actor) {
   new GGSpellCardsViewer(actor).render(true);
+}
+
+/* ---------- selector de temas (UI GegesVTT) ---------- */
+
+class GGThemePicker extends HandlebarsApplicationMixin(ApplicationV2) {
+  constructor(options = {}) {
+    super(options);
+    this.selected = spellCardTheme();
+  }
+
+  static DEFAULT_OPTIONS = {
+    id: "ggse-theme-picker",
+    classes: ["gg-sheet-export", "ggse-theme-picker"],
+    tag: "div",
+    window: { title: "GGSE.Cards.ThemePickerTitle", icon: "fa-solid fa-palette", resizable: false },
+    position: { width: 660, height: "auto" },
+    actions: {
+      ggseThemeApply: GGThemePicker.#onApply,
+      ggseThemeCancel: GGThemePicker.#onCancel
+    }
+  };
+
+  static PARTS = { body: { template: `modules/${MODULE_ID}/templates/theme-picker.hbs` } };
+
+  async _prepareContext(_options) {
+    return { tilesHtml: buildThemeTiles(this.selected) };
+  }
+
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const root = this.element;
+    root.querySelectorAll(".ggse-tile").forEach((tile) => {
+      tile.addEventListener("click", (ev) => {
+        const cta = ev.target.closest("[data-buy]");
+        if (cta) {
+          const url = cta.getAttribute("data-buy");
+          if (url) window.open(url, "_blank", "noopener");
+          return;
+        }
+        if (tile.dataset.locked === "true") return; // premium: no seleccionable sin comprar
+        root.querySelectorAll(".ggse-tile").forEach((t) => t.classList.remove("sel"));
+        tile.classList.add("sel");
+        this.selected = tile.dataset.theme;
+      });
+    });
+  }
+
+  static async #onApply() {
+    await game.settings.set(MODULE_ID, "spellCardTheme", this.selected);
+    ui.notifications.info(game.i18n.localize("GGSE.Cards.ThemeApplied"));
+    // refrescar cualquier visor de tarjetas abierto (v12 y v13)
+    const apps = [
+      ...(foundry.applications?.instances?.values?.() ?? []),
+      ...Object.values(ui.windows ?? {})
+    ];
+    for (const app of apps) if (app instanceof GGSpellCardsViewer) app.render();
+    this.close();
+  }
+
+  static async #onCancel() { this.close(); }
+}
+
+function openThemePicker() {
+  new GGThemePicker().render(true);
 }
 
 /* ---------- botones en el header de las fichas ---------- */
@@ -514,6 +579,7 @@ Hooks.once("init", () => {
       exportJournalMarkdown,
       openSpellCards: openSpellCardsViewer,
       exportSpellCards: exportSpellCardsPdf,
+      openThemePicker,
       /** Para packs de themes (módulos satélite). Ver esquema en spellcards-print.mjs */
       registerCardTheme: (theme) => {
         const ok = registerCardTheme(theme);

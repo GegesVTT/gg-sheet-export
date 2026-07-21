@@ -1,0 +1,49 @@
+/* GG Sheet Export — selector de temas (usa el kit ggse-ui). */
+
+.ggse-picker { width:100%; }
+.ggse-picker .ggse-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.ggse-picker .ggse-tile { position:relative; background:linear-gradient(180deg, #241a12, #1c140d);
+  border:1px solid var(--rule); border-radius:0; padding:12px 12px 10px; cursor:pointer;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.ggse-picker .ggse-tile:hover { transform:translateY(-3px); border-color:var(--ambar-d);
+  box-shadow:0 8px 22px rgba(0,0,0,0.5), 0 0 0 1px rgba(224,162,60,0.25); }
+.ggse-picker .ggse-tile.sel { border-color:var(--ambar);
+  box-shadow:0 0 0 1px var(--ambar), 0 0 18px rgba(224,162,60,0.28), inset 0 0 22px rgba(224,162,60,0.06); }
+.ggse-picker .ggse-tile.sel .ggse-check { opacity:1; }
+
+.ggse-picker .ggse-check { position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%;
+  background:var(--ambar); color:#19120d; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; opacity:0; box-shadow:0 0 8px rgba(224,162,60,0.6); z-index:3; }
+
+/* mini-preview de la carta con la paleta real del theme */
+.ggse-picker .ggse-swatch { height:96px; border-radius:0; overflow:hidden; position:relative;
+  border:0.5px solid rgba(0,0,0,0.4); }
+.ggse-picker .ggse-swatch .bar { height:10px; }
+.ggse-picker .ggse-swatch .body { padding:8px 9px; }
+.ggse-picker .ggse-swatch .sname { font-family:var(--g-title); font-size:11px; line-height:1.1; }
+.ggse-picker .ggse-swatch .slvl { font-family:var(--g-title); font-size:7px; letter-spacing:0.1em;
+  text-transform:uppercase; margin-top:4px; }
+.ggse-picker .ggse-swatch .line { height:3px; border-radius:2px; margin-top:6px; opacity:0.5; }
+
+.ggse-picker .ggse-tname { font-family:var(--g-title); font-size:13px; color:#f0e2c6; margin:10px 0 0;
+  display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.ggse-picker .ggse-badge { font-family:var(--g-title); font-size:8px; letter-spacing:0.08em;
+  text-transform:uppercase; padding:2px 7px; border-radius:0; white-space:nowrap; }
+.ggse-picker .ggse-badge.now { background:rgba(224,162,60,0.16); color:var(--ambar-l); border:0.5px solid var(--ambar-d); }
+.ggse-picker .ggse-badge.free { background:rgba(120,140,120,0.14); color:#bcae94; border:0.5px solid var(--rule); }
+.ggse-picker .ggse-badge.pro { background:linear-gradient(90deg, var(--vino), var(--ambar-d)); color:#fff; }
+
+/* overlay de compra (premium) */
+.ggse-picker .ggse-buy { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column;
+  gap:7px; align-items:center; justify-content:center; background:rgba(20,13,7,0.5);
+  opacity:0; transition:opacity .18s ease; }
+.ggse-picker .ggse-tile:hover .ggse-buy { opacity:1; }
+.ggse-picker .ggse-buy .cta { font-family:var(--g-title); font-size:11px; letter-spacing:0.03em;
+  color:#1c1409; background:linear-gradient(180deg, var(--ambar-l), var(--ambar-d)); padding:6px 14px;
+  border:1px solid #120c07; box-shadow:0 0 12px rgba(224,162,60,0.5); cursor:pointer; }
+.ggse-picker .ggse-buy.soon .cta { background:transparent; color:var(--ambar-l);
+  border-color:var(--ambar-d); box-shadow:none; cursor:default; }
+.ggse-picker .ggse-swatch.locked > *:not(.ggse-buy) { filter:blur(1.5px) brightness(0.9); }
+
+.ggse-picker .ggse-foot { display:flex; justify-content:flex-end; gap:12px; margin-top:20px; }

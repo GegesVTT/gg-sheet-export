@@ -134,5 +134,18 @@
   "GGSE.Cards.LvlAbbr": "N",
   "GGSE.Cards.PerSlot": "Por espacio",
   "GGSE.Cards.SettingDedupeName": "Tarjetas: fusionar conjuros duplicados",
-  "GGSE.Cards.SettingDedupeHint": "Si se activa, no repite tarjetas de conjuros con el mismo nombre y nivel (útil si el actor tiene copias del mismo conjuro). Por defecto, desactivado."
+  "GGSE.Cards.SettingDedupeHint": "Si se activa, no repite tarjetas de conjuros con el mismo nombre y nivel (útil si el actor tiene copias del mismo conjuro). Por defecto, desactivado.",
+  "GGSE.Cards.ThemeButton": "Tema",
+  "GGSE.Cards.ThemePickerTitle": "Temas de tarjetas",
+  "GGSE.Cards.ThemePickerSub": "Elegí la estética de tus cartas de conjuros",
+  "GGSE.Cards.Cancel": "Cancelar",
+  "GGSE.Cards.ApplyTheme": "Aplicar tema",
+  "GGSE.Cards.ThemeApplied": "Tema de tarjetas actualizado.",
+  "GGSE.Cards.BadgeCurrent": "Actual",
+  "GGSE.Cards.BadgeFree": "Gratis",
+  "GGSE.Cards.BadgePremium": "Premium",
+  "GGSE.Cards.BadgeSoon": "Pronto",
+  "GGSE.Cards.Buy": "Comprar · Patreon",
+  "GGSE.Cards.SampleSpell": "Bola de Fuego",
+  "GGSE.Cards.SampleSchool": "Evocación"
 }
