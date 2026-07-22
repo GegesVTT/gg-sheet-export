@@ -191,10 +191,10 @@ export const CARDS_CSS = `
 .ggse-front .c-scaling b { color:var(--card-ink); font-weight:700; }
 
 .ggse-front .c-tags { display:flex; gap:1mm; margin-top:1.2mm; }
-.ggse-front .tag { font-size:5.9pt; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
+.ggse-front .ggse-tag { font-size:5.9pt; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
   padding:0.4mm 1.2mm; border-radius:0.8mm; color:#fff; }
-.ggse-front .tag.conc { background:var(--card-wine); }
-.ggse-front .tag.rit { background:var(--card-amber); }
+.ggse-front .ggse-tag.conc { background:var(--card-wine); }
+.ggse-front .ggse-tag.rit { background:var(--card-amber); }
 
 /* Descripción que arranca en el frente (solo hechizos largos; la llena el JS). */
 .ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.8mm;
@@ -240,8 +240,8 @@ function frontCard(sp, id, themeId) {
   }
 
   const tags = [];
-  if (sp.concentration) tags.push(`<span class="tag conc">${loc("GGSE.Cards.Conc")}</span>`);
-  if (sp.ritual) tags.push(`<span class="tag rit">${loc("GGSE.Cards.Ritual")}</span>`);
+  if (sp.concentration) tags.push(`<span class="ggse-tag conc">${loc("GGSE.Cards.Conc")}</span>`);
+  if (sp.ritual) tags.push(`<span class="ggse-tag rit">${loc("GGSE.Cards.Ritual")}</span>`);
 
   // Escalado: trucos por nivel de pj (N5/N11/N17); con nivel, incremento/espacio.
   let scaling = "";
