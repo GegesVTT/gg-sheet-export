@@ -15,6 +15,7 @@
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const loc = (k) => game.i18n.localize(k);
+const BRAND = "CRÓNICAS BÁRDICAS";
 
 import { LOGO_WATERMARK } from "./spellcards-logo.mjs";
 
@@ -50,19 +51,40 @@ export function damageIcon(type) {
   const color = DAMAGE_COLORS[type] || "var(--card-ink)";
   return `<svg class="dmg-ico" viewBox="0 0 24 24" fill="currentColor" style="color:${color}">${inner}</svg>`;
 }
+const FONTS_MARCELLUS_SPECTRAL =
+  "https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap";
+
 export const THEMES = {
   cronicas: {
     id: "cronicas",
     name: "Crónicas Bárdicas",
     schemaVersion: 1,
     watermark: LOGO_WATERMARK,
-    fontImports: ["https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap"],
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
     vars: {
-      "--card-ink": "#241a12", "--card-amber": "#a06914", "--card-amber-b": "#e0a23c",
-      "--card-wine": "#8a2f3f", "--card-rule": "#c9b99a", "--card-dim": "#6f6151",
-      "--card-paper": "#fbf7ee", "--card-back": "#f6efe0",
-      "--card-title": '"Cinzel", Georgia, serif',
-      "--card-body": 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+      "--card-paper": "#f2e9d5", "--card-ink": "#241a12", "--card-back": "#1d1d1b",
+      "--card-back-ink": "#f2e9d5",
+      "--card-amber": "#a97e1e", "--card-amber-b": "#e3ad4b", "--card-wine": "#8a2f3f",
+      "--card-frame": "#8a2f3f", "--card-rule": "#cdbfa6", "--card-dim": "#7a6a52",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
+    }
+  },
+  grimoire: {
+    id: "grimoire",
+    name: "Grimorio Oscuro",
+    schemaVersion: 1,
+    premium: true,
+    buyUrl: "",   // ← completar con el link de Patreon del pack
+    watermark: null,
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
+    vars: {
+      "--card-paper": "#04272c", "--card-ink": "#f2e6c8", "--card-back": "#021b1f",
+      "--card-back-ink": "#f2e6c8",
+      "--card-amber": "#c9a24b", "--card-amber-b": "#facc35", "--card-wine": "#c56a4e",
+      "--card-frame": "#e3ad4b", "--card-rule": "#2c4a4a", "--card-dim": "#8aa39b",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
     }
   }
 };
@@ -142,7 +164,13 @@ export function buildThemeTiles(currentId = "cronicas") {
   }).join("");
 }
 
-/* ---------- CSS de tarjeta (compartido pantalla + impresión) ---------- */
+/* ---------- CSS de tarjeta (compartido pantalla + impresión) ----------
+   Look "Crónicas Bárdicas" (blueprint): marco octagonal de doble filete por
+   pseudo-elementos (color por --card-frame), kicker + título + subtítulo
+   centrados, divisores rombo, stats en 2 columnas, dorso híbrido (decorativo
+   o descripción), y print-color-adjust para que impriman los fondos. */
+const OCT = (c) => `polygon(${c} 0,calc(100% - ${c}) 0,100% ${c},100% calc(100% - ${c}),calc(100% - ${c}) 100%,${c} 100%,0 calc(100% - ${c}),0 ${c})`;
+
 export const CARDS_CSS = `
 .ggse-cards { color:var(--card-ink); }
 .ggse-cards * { box-sizing:border-box; }
@@ -152,37 +180,46 @@ export const CARDS_CSS = `
 .ggse-sheet-label { display:none; }
 
 .ggse-card { width:63mm; height:88mm; overflow:hidden; position:relative;
-  border:0.12mm solid rgba(0,0,0,0.28); padding:3mm 3.2mm; display:flex; flex-direction:column;
-  background:#fff; font-family:var(--card-body); }
-.ggse-card.ggse-blank { border-color:rgba(0,0,0,0.10); background:transparent; }
+  padding:5.2mm; display:flex; flex-direction:column;
+  background:var(--card-paper); color:var(--card-ink); font-family:var(--card-body);
+  clip-path:${OCT("3.2mm")};
+  print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+.ggse-card.ggse-blank { background:transparent; clip-path:none; }
 
-/* Marca de agua: logo grande, desfasado del centro (abajo-derecha, sangrando
-   del borde) y casi imperceptible. Es un <img> real —no background— para que
-   la impresión nativa siempre lo incluya. El contenido apila por encima. */
+/* marca de agua: <img> real (no background) para que la impresión la incluya */
 .ggse-card .c-wm { position:absolute; right:-9mm; bottom:-11mm; height:64mm; width:auto;
   opacity:0.05; pointer-events:none; user-select:none; z-index:0; }
 .ggse-card.ggse-blank .c-wm { display:none; }
-.ggse-card > *:not(.c-wm) { position:relative; z-index:1; }
+.ggse-card > *:not(.c-wm) { position:relative; z-index:2; }
+
+/* marco octagonal doble (color por --card-frame) */
+.ggse-front::before, .ggse-back::before { content:""; position:absolute; inset:2.4mm; z-index:1;
+  border:0.35mm solid var(--card-frame); pointer-events:none; clip-path:${OCT("1.6mm")}; }
+.ggse-front::after, .ggse-back::after { content:""; position:absolute; inset:3mm; z-index:1;
+  border:0.2mm solid var(--card-frame); pointer-events:none; clip-path:${OCT("1.2mm")}; }
 
 /* ---- frente ---- */
-.ggse-front { border-top:3mm solid var(--school, var(--card-amber)); padding-top:2.4mm; }
-.ggse-front .c-name { font-family:var(--card-title); font-weight:700; font-size:10.5pt;
-  line-height:1.02; color:var(--card-ink); }
-.ggse-front .c-sub { font-size:6.6pt; letter-spacing:0.05em; text-transform:uppercase;
-  color:var(--school, var(--card-wine)); margin-top:0.6mm; font-weight:600; }
-.ggse-front .c-rule { height:0.2mm; background:var(--card-rule); margin:1.6mm 0 1.4mm; }
+.ggse-front .c-kick { font-family:var(--card-title); font-size:5.2pt; letter-spacing:0.28em;
+  text-transform:uppercase; color:var(--card-wine); text-align:center; }
+.ggse-front .c-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
+  line-height:1.02; color:var(--card-ink); text-align:center; margin-top:1.1mm; }
+.ggse-front .c-sub { font-size:8pt; font-style:italic; color:var(--card-wine);
+  text-align:center; margin-top:0.4mm; }
+.ggse-front .c-rule { height:0.3mm; background:var(--card-amber); margin:1.8mm 0 1.6mm; position:relative; }
+.ggse-front .c-rule::after { content:""; position:absolute; left:50%; top:50%; width:1.5mm; height:1.5mm;
+  background:var(--card-wine); transform:translate(-50%,-50%) rotate(45deg); }
 
-.ggse-front .c-stats { font-size:7.4pt; line-height:1.28; }
-.ggse-front .c-row { display:flex; gap:1.6mm; }
-.ggse-front .c-k { flex:0 0 15mm; font-size:6.1pt; letter-spacing:0.04em; text-transform:uppercase;
-  color:var(--card-dim); padding-top:0.4pt; }
-.ggse-front .c-v { flex:1; font-weight:600; }
+.ggse-front .c-stats { display:grid; grid-template-columns:1fr 1fr; gap:0.8mm 3mm;
+  font-size:7pt; line-height:1.3; }
+.ggse-front .c-row { display:flex; flex-direction:column; }
+.ggse-front .c-k { font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.06em;
+  text-transform:uppercase; color:var(--card-wine); }
+.ggse-front .c-v { font-weight:600; color:var(--card-ink); }
 
-.ggse-front .c-combat { margin-top:1.6mm; display:flex; flex-wrap:wrap; gap:1mm; align-items:center; }
+.ggse-front .c-combat { margin-top:1.8mm; display:flex; flex-wrap:wrap; gap:1mm; align-items:center; }
 .ggse-front .cbadge { display:inline-flex; align-items:center; gap:0.6mm; font-size:6.6pt; font-weight:700;
-  padding:0.5mm 1.4mm; border-radius:1mm; border:0.15mm solid var(--card-rule);
-  color:var(--card-ink); background:var(--card-paper); }
-.ggse-front .cbadge.atk { border-color:var(--school, var(--card-amber)); }
+  padding:0.5mm 1.4mm; border-radius:1mm; border:0.18mm solid var(--card-amber);
+  color:var(--card-ink); background:transparent; }
 .ggse-front .cbadge.save { border-color:var(--card-wine); color:var(--card-wine); }
 .ggse-front .dmg-ico { width:8pt; height:8pt; display:inline-block; flex:0 0 auto; }
 
@@ -192,35 +229,45 @@ export const CARDS_CSS = `
 
 .ggse-front .c-tags { display:flex; gap:1mm; margin-top:1.2mm; }
 .ggse-front .ggse-tag { font-size:5.9pt; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
-  padding:0.4mm 1.2mm; border-radius:0.8mm; color:#fff; }
+  padding:0.4mm 1.2mm; border-radius:0.8mm; color:var(--card-paper); }
 .ggse-front .ggse-tag.conc { background:var(--card-wine); }
 .ggse-front .ggse-tag.rit { background:var(--card-amber); }
 
-/* Descripción que arranca en el frente (solo hechizos largos; la llena el JS). */
-.ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.8mm;
-  font-size:8pt; line-height:1.24; text-align:justify; hyphens:auto; color:var(--card-ink);
-  border-top:0.2mm solid transparent; }
-.ggse-front .c-desc:not(:empty) { border-top-color:var(--card-rule); padding-top:1.4mm; }
+.ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.6mm;
+  font-size:7.4pt; line-height:1.32; text-align:justify; hyphens:auto; color:var(--card-ink); }
 .ggse-front .c-desc p { margin:0 0 1.2mm; }
 .ggse-front .c-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
 
-/* ---- dorso ---- */
-.ggse-back { background:var(--card-back); }
-.ggse-back .b-head { display:flex; justify-content:space-between; align-items:baseline; gap:1.4mm;
-  border-bottom:0.2mm solid var(--card-rule); padding-bottom:1mm; margin-bottom:1.4mm; }
-.ggse-back .b-name { font-family:var(--card-title); font-weight:700; font-size:8pt; line-height:1.03;
-  color:var(--card-ink); }
-.ggse-back .b-sub { font-size:5.8pt; text-transform:uppercase; letter-spacing:0.04em;
-  color:var(--card-dim); white-space:nowrap; }
-.ggse-back .b-material { font-size:6pt; font-style:italic; color:var(--card-dim); margin-bottom:1mm;
-  line-height:1.15; }
-.ggse-back .b-desc { flex:1; min-height:0; overflow:hidden; font-size:8pt; line-height:1.24;
-  text-align:justify; hyphens:auto; }
-.ggse-back .b-desc p { margin:0 0 1.2mm; }
-.ggse-back .b-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
-.ggse-back .b-desc li { margin:0 0 0.4mm; }
-.ggse-back .b-ref { display:none; font-size:6.4pt; font-weight:700; color:var(--card-wine);
-  border-top:0.2mm solid var(--card-rule); padding-top:1mm; margin-top:1mm; }
+/* ---- dorso (siempre oscuro; --card-back) ---- */
+.ggse-back { background:var(--card-back); color:var(--card-back-ink); }
+
+/* decorativo: hechizo corto (todo entró en el frente) */
+.ggse-back.deco { align-items:center; justify-content:center; text-align:center; gap:2.4mm; }
+.ggse-back.deco .b-kick { font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.3em;
+  text-transform:uppercase; color:var(--card-amber); }
+.ggse-back.deco .b-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
+  line-height:1.1; color:var(--card-amber-b); }
+.ggse-back.deco .b-rombo { width:2.6mm; height:2.6mm; background:var(--card-amber-b); transform:rotate(45deg); }
+.ggse-back.deco .b-foot { position:absolute; bottom:5.4mm; left:0; right:0; text-align:center;
+  font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--card-amber); }
+
+/* descripción: hechizo largo (letras claras sobre el dorso oscuro) */
+.ggse-back.desc .b-head { display:flex; justify-content:space-between; align-items:baseline; gap:1.4mm;
+  border-bottom:0.2mm solid var(--card-amber); padding-bottom:1mm; margin-bottom:1.6mm; }
+.ggse-back.desc .b-name { font-family:var(--card-title); font-weight:400; font-size:9pt; line-height:1.03;
+  color:var(--card-amber-b); }
+.ggse-back.desc .b-sub { font-family:var(--card-title); font-size:5.4pt; text-transform:uppercase;
+  letter-spacing:0.06em; color:var(--card-amber); white-space:nowrap; }
+.ggse-back.desc .b-material { font-size:6pt; font-style:italic; color:var(--card-amber);
+  margin-bottom:1mm; line-height:1.15; }
+.ggse-back.desc .b-desc { flex:1; min-height:0; overflow:hidden; font-size:7.6pt; line-height:1.32;
+  text-align:justify; hyphens:auto; color:var(--card-back-ink); }
+.ggse-back.desc .b-desc p { margin:0 0 1.2mm; }
+.ggse-back.desc .b-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
+.ggse-back.desc .b-desc li { margin:0 0 0.4mm; }
+.ggse-back.desc .b-ref { display:none; font-family:var(--card-title); font-size:6pt; letter-spacing:0.1em;
+  color:var(--card-amber); border-top:0.2mm solid var(--card-amber); padding-top:1mm; margin-top:1mm; }
 `;
 
 /* ---------- constructores ---------- */
@@ -230,7 +277,7 @@ function watermark(themeId) {
   return src ? `<img class="c-wm" src="${src}" alt="">` : "";
 }
 
-function frontCard(sp, id, themeId) {
+function frontCard(sp, id, themeId, decorative) {
   const stat = (k, v) => `<div class="c-row"><div class="c-k">${esc(k)}</div><div class="c-v">${esc(v)}</div></div>`;
   const combat = [];
   if (sp.toHit) combat.push(`<span class="cbadge atk">${loc("GGSE.Cards.Attack")} ${esc(sp.toHit)}</span>`);
@@ -253,29 +300,39 @@ function frontCard(sp, id, themeId) {
     scaling = `<div class="c-scaling"><span>${loc("GGSE.Cards.PerSlot")} +${esc(sp.scaling.upcast)}</span></div>`;
   }
 
-  return `<div class="ggse-card ggse-front" style="--school:${sp.schoolColor}">
+  return `<div class="ggse-card ggse-front${decorative ? " deco" : ""}" style="--school:${sp.schoolColor}">
     ${watermark(themeId)}
+    <div class="c-kick">${BRAND}</div>
     <div class="c-name">${esc(sp.name)}</div>
-    <div class="c-sub">${esc(sp.levelLabel)} · ${esc(sp.school)}</div>
+    <div class="c-sub">${esc(sp.school)} · ${esc(sp.levelLabel)}</div>
     <div class="c-rule"></div>
     <div class="c-stats">
       ${stat(loc("GGSE.Cards.Casting"), sp.activation)}
       ${stat(loc("GGSE.Cards.Range"), sp.range)}
-      ${stat(loc("GGSE.Cards.Duration"), sp.duration)}
       ${stat(loc("GGSE.Cards.Components"), sp.components)}
+      ${stat(loc("GGSE.Cards.Duration"), sp.duration)}
     </div>
     ${combat.length ? `<div class="c-combat">${combat.join("")}</div>` : ""}
     ${scaling}
     ${tags.length ? `<div class="c-tags">${tags.join("")}</div>` : ""}
-    <div class="c-desc" data-spell="${id}"></div>
+    <div class="c-desc" data-spell="${id}">${decorative ? (sp.descHTML || "") : ""}</div>
   </div>`;
 }
 
-function backCard(sp, id, themeId) {
+function backCard(sp, id, themeId, decorative) {
+  if (decorative) {
+    return `<div class="ggse-card ggse-back deco">
+    ${watermark(themeId)}
+    <div class="b-kick">${BRAND}</div>
+    <div class="b-name">${esc(sp.name)}</div>
+    <div class="b-rombo"></div>
+    <div class="b-foot">GGWP</div>
+  </div>`;
+  }
   const refText = sp.sourceRef
     ? `▸ ${esc(sp.sourceRef)}`
     : `▸ ${loc("GGSE.Cards.SeeManual")}`;
-  return `<div class="ggse-card ggse-back">
+  return `<div class="ggse-card ggse-back desc">
     ${watermark(themeId)}
     <div class="b-head"><div class="b-name">${esc(sp.name)}</div><div class="b-sub">${esc(sp.levelLabel)}</div></div>
     ${sp.material ? `<div class="b-material">${loc("GGSE.Cards.Material")}: ${esc(sp.material)}</div>` : ""}
@@ -299,6 +356,12 @@ function mirrorIndex(i) {
  * @param {{ mirror?: boolean }} opts  mirror=true para impresión doble faz;
  *   false para la vista previa (orden natural, más fácil de leer).
  */
+/** Máximo de caracteres de descripción que entran cómodos en el frente.
+ *  Por debajo → dorso decorativo (todo en el frente); por encima → dorso de
+ *  descripción. Ajustable si algún hechizo queda justo. */
+const FRONT_DESC_MAX = 340;
+const descLen = (sp) => String(sp?.descHTML || "").replace(/<[^>]+>/g, "").trim().length;
+
 export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {}) {
   const chunks = [];
   for (let i = 0; i < data.spells.length; i += 9) chunks.push(data.spells.slice(i, i + 9));
@@ -310,9 +373,10 @@ export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {
     for (let i = 0; i < 9; i++) {
       const sp = group[i];
       const gid = gi * 9 + i;
-      fronts.push(sp ? frontCard(sp, gid, themeId) : blank());
+      const deco = sp ? descLen(sp) <= FRONT_DESC_MAX : false;
+      fronts.push(sp ? frontCard(sp, gid, themeId, deco) : blank());
       const bi = mirror ? mirrorIndex(i) : i;
-      backs[bi] = sp ? backCard(sp, gid, themeId) : blank();
+      backs[bi] = sp ? backCard(sp, gid, themeId, deco) : blank();
     }
     const label = chunks.length > 1 ? ` ${gi + 1}/${chunks.length}` : "";
     return `
@@ -330,8 +394,14 @@ export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {
 export function fitSpellCards(root) {
   // Frentes: achica el nombre si desborda su caja.
   root.querySelectorAll(".ggse-front .c-name").forEach((el) => {
-    let pt = 10.5;
-    while (el.scrollHeight > el.clientHeight + 1 && pt > 7) { pt -= 0.5; el.style.fontSize = pt + "pt"; }
+    let pt = 13;
+    while (el.scrollHeight > el.clientHeight + 1 && pt > 8) { pt -= 0.5; el.style.fontSize = pt + "pt"; }
+  });
+
+  // Dorso decorativo: la descripción va en el frente; achicar si desborda.
+  root.querySelectorAll(".ggse-front.deco .c-desc").forEach((el) => {
+    let pt = 7.4;
+    while (el.scrollHeight > el.clientHeight + 1 && pt > 6) { pt -= 0.25; el.style.fontSize = pt + "pt"; }
   });
 
   // Descripciones: cada dorso se empareja con el frente por data-spell.
