@@ -17,7 +17,7 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const loc = (k) => game.i18n.localize(k);
 const BRAND = "CRÓNICAS BÁRDICAS";
 
-import { LOGO_WATERMARK } from "./spellcards-logo.mjs";
+import { LOGO_WATERMARK, logoDataUri } from "./spellcards-logo.mjs";
 
 /* ---------- íconos de tipo de daño (SVG embebido, sin dependencias) ----------
    Vectoriales: se ven igual en el visor y en el PDF, y no dependen de Font
@@ -66,6 +66,21 @@ export const THEMES = {
       "--card-back-ink": "#f2e9d5",
       "--card-amber": "#a97e1e", "--card-amber-b": "#e3ad4b", "--card-wine": "#8a2f3f",
       "--card-frame": "#8a2f3f", "--card-rule": "#cdbfa6", "--card-dim": "#7a6a52",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
+    }
+  },
+  inksaver: {
+    id: "inksaver",
+    name: "Ahorra Tinta",
+    schemaVersion: 1,
+    watermark: null,
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
+    vars: {
+      "--card-paper": "#ffffff", "--card-ink": "#1a1a1a", "--card-back": "#ffffff",
+      "--card-back-ink": "#1a1a1a",
+      "--card-amber": "#555555", "--card-amber-b": "#222222", "--card-wine": "#444444",
+      "--card-frame": "#8a8a8a", "--card-rule": "#bdbdbd", "--card-dim": "#666666",
       "--card-title": '"Marcellus SC", Georgia, serif',
       "--card-body": '"Spectral", Georgia, serif'
     }
@@ -211,9 +226,9 @@ export const CARDS_CSS = `
   background:var(--card-wine); transform:translate(-50%,-50%) rotate(45deg); }
 
 .ggse-front .c-stats { display:grid; grid-template-columns:1fr 1fr; gap:0.8mm 3mm;
-  font-size:7pt; line-height:1.3; }
+  font-size:7.4pt; line-height:1.3; }
 .ggse-front .c-row { display:flex; flex-direction:column; }
-.ggse-front .c-k { font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.06em;
+.ggse-front .c-k { font-family:var(--card-title); font-size:5.8pt; letter-spacing:0.06em;
   text-transform:uppercase; color:var(--card-wine); }
 .ggse-front .c-v { font-weight:600; color:var(--card-ink); }
 
@@ -235,7 +250,7 @@ export const CARDS_CSS = `
 .ggse-front .ggse-tag.rit { color:var(--card-amber); }
 
 .ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.6mm;
-  font-size:7.4pt; line-height:1.32; text-align:justify; hyphens:auto; color:var(--card-ink); }
+  font-size:8pt; line-height:1.34; text-align:justify; hyphens:auto; color:var(--card-ink); }
 .ggse-front .c-desc p { margin:0 0 1.2mm; }
 .ggse-front .c-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
 
@@ -249,6 +264,7 @@ export const CARDS_CSS = `
 .ggse-back.deco .b-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
   line-height:1.1; color:var(--card-amber-b); }
 .ggse-back.deco .b-rombo { width:2.6mm; height:2.6mm; background:var(--card-amber-b); transform:rotate(45deg); }
+.ggse-back.deco .b-logo { height:20mm; width:auto; }
 .ggse-back.deco .b-foot { position:absolute; bottom:5.4mm; left:0; right:0; text-align:center;
   font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.22em;
   text-transform:uppercase; color:var(--card-amber); }
@@ -262,7 +278,7 @@ export const CARDS_CSS = `
   letter-spacing:0.06em; color:var(--card-amber); white-space:nowrap; }
 .ggse-back.desc .b-material { font-size:6pt; font-style:italic; color:var(--card-amber);
   margin-bottom:1mm; line-height:1.15; }
-.ggse-back.desc .b-desc { flex:1; min-height:0; overflow:hidden; font-size:7.6pt; line-height:1.32;
+.ggse-back.desc .b-desc { flex:1; min-height:0; overflow:hidden; font-size:8pt; line-height:1.34;
   text-align:justify; hyphens:auto; color:var(--card-back-ink); }
 .ggse-back.desc .b-desc p { margin:0 0 1.2mm; }
 .ggse-back.desc .b-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
@@ -329,14 +345,20 @@ function backFill(themeId) {
   return `<img class="c-bg" src="data:image/svg+xml;base64,${btoa(svg)}" alt="">`;
 }
 
+/** Logo del laúd (plano) en el color de acento del theme, para el dorso decorativo. */
+function logoMark(themeId) {
+  const t = THEMES[themeId] ?? THEMES.cronicas;
+  const color = (t.vars && t.vars["--card-amber-b"]) || "#e3ad4b";
+  return `<img class="b-logo" src="${logoDataUri(color)}" alt="">`;
+}
+
 function backCard(sp, id, themeId, decorative) {
   if (decorative) {
     return `<div class="ggse-card ggse-back deco">
     ${backFill(themeId)}
-    ${watermark(themeId)}
     <div class="b-kick">${BRAND}</div>
+    ${logoMark(themeId)}
     <div class="b-name">${esc(sp.name)}</div>
-    <div class="b-rombo"></div>
     <div class="b-foot">GGWP</div>
   </div>`;
   }
@@ -371,7 +393,7 @@ function mirrorIndex(i) {
 /** Máximo de caracteres de descripción que entran cómodos en el frente.
  *  Por debajo → dorso decorativo (todo en el frente); por encima → dorso de
  *  descripción. Ajustable si algún hechizo queda justo. */
-const FRONT_DESC_MAX = 340;
+const FRONT_DESC_MAX = 300;
 const descLen = (sp) => String(sp?.descHTML || "").replace(/<[^>]+>/g, "").trim().length;
 
 export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {}) {
@@ -412,7 +434,7 @@ export function fitSpellCards(root) {
 
   // Dorso decorativo: la descripción va en el frente; achicar si desborda.
   root.querySelectorAll(".ggse-front.deco .c-desc").forEach((el) => {
-    let pt = 7.4;
+    let pt = 8;
     while (el.scrollHeight > el.clientHeight + 1 && pt > 6) { pt -= 0.25; el.style.fontSize = pt + "pt"; }
   });
 

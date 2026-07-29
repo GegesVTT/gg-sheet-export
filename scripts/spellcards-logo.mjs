@@ -1,6 +1,28 @@
 /**
- * GG Sheet Export — logo (marca de agua de las tarjetas).
- * Laúd con las dos G espejadas. SVG en base64 → imprime siempre, funciona sin red.
- * Variante con las cuerdas del centro en oscuro (roble).
+ * GG Sheet Export — logo (laúd con las dos G espejadas).
+ * Se usa APLANADO a un solo color para que se lea como laúd completo (con las
+ * cuerdas) y no como una cruz. logoDataUri(color) arma la variante en el color
+ * que pida cada uso: watermark oscuro sobre pergamino, o dorado sobre dorso oscuro.
  */
-export const LOGO_WATERMARK = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iQ2FwYV8yIiBkYXRhLW5hbWU9IkNhcGEgMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgNjI3LjM4IDU0OC40NCI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2UzYWQ0YjsKICAgICAgfQoKICAgICAgLmNscy0yIHsKICAgICAgICBmaWxsOiAjMWQxZDFiOwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8ZyBpZD0iQ2FwYV8xLTIiIGRhdGEtbmFtZT0iQ2FwYSAxIj4KICAgIDxnPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGZpbGw9IiMxZDFkMWIiIGQ9Ik0zMDcuNzQsMGg0LjE1djI5OS4yMWgwYy0yLjI5LDAtNC4xNS0xLjg2LTQuMTUtNC4xNVYwaDBaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZmlsbD0iIzFkMWQxYiIgZD0iTTMyMy44MiwyLjE5aDBjMi4yOSwwLDQuMTUsMy41Niw0LjE1LDcuOTZ2MjY5LjI5YzAsMi4yLTQuMTUsMTMuMDMtNC4xNSwxMy4wM1YyLjE5WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGZpbGw9IiMxZDFkMWIiIGQ9Ik0zMTUuNzgsMGg0LjE1djI5NS4wNmMwLDIuMjktMS44Niw0LjE1LTQuMTUsNC4xNWgwVjBoMFoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBmaWxsPSIjMWQxZDFiIiBkPSJNMzAzLjg0LDIuN2gwYy0yLjI5LDAtNC4xNSwzLjU2LTQuMTUsNy45NnYyNjkuMjljMCwyLjIsNC4xNSwxMy4wMyw0LjE1LDEzLjAzVjIuN1oiLz4KICAgIDwvZz4KICAgIDxnPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik02MDUuMTUsMjc5LjM3Yy4xNSwzLjQ3LjIzLDUwLjA5LjIzLDUzLjYyLDAsMTEwLjI1LTExNi4wOSwyMDUuNDctMjYzLjU2LDIxNC44OHYuNTdjNjguODEtNC4yOSwxMzIuNzYtMjYuMDIsMTgyLjItNjIuMjksNTUuNjktNDAuODYsMTAzLjM2LTk1LjI1LDEwMy4zNi0xNTMuMTYsMC0uMDMsMC0uMDcsMC0uMSwwLTYuNDMtMS42MS0xMi43Ni00LjUyLTE4LjVsLTE3LjcxLTM1LjAxWiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yMi4yMywyNzkuMzhjLS4xNSwzLjQ3LS4yMyw1MC4wOS0uMjMsNTMuNjIsMCwxMTAuMjUsMTE2LjA5LDIwNS40NywyNjMuNTYsMjE0Ljg3di41N2MtNjguODEtNC4yOS0xMzIuNzYtMjYuMDItMTgyLjItNjIuMjlDNDcuNjcsNDQ1LjMsMCwzOTAuOSwwLDMzMi45OWMwLS4wMywwLS4wNywwLS4xLDAtNi40MywxLjYxLTEyLjc2LDQuNTItMTguNWwxNy43MS0zNS4wMVoiLz4KICAgIDwvZz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTMzNS4yMSwxMDguMjh2MTc3LjZoMTEwLjA2czgsMCw4LDBsLS4xOSw0Mi42NXMtMy4zNC0xMS42My0xMy44MS0xMS42My05My4xNywwLTkzLjE3LDB2MTU3LjIxczE5Ni02LDE5Ni0xNjFjMC0xNTUtMjA2LjktMjQwLjMyLTIwNi45LTI0MC4zMnYzNS41WiIvPgogICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMjkyLjQ2LDEwOC4yOHYxNzcuNmgtMTEwLjA2cy04LDAtOCwwbC4xOSw0Mi42NXMzLjM0LTExLjYzLDEzLjgxLTExLjYzLDkzLjE3LDAsOTMuMTcsMHYxNTcuMjFzLTE5Ni02LTE5Ni0xNjEsMjA2LjktMjQwLjMyLDIwNi45LTI0MC4zMnYzNS41WiIvPgogIDwvZz4KPC9zdmc+";
+const LOGO_VB = "0 0 627.38 548.44";
+const LOGO_PATHS = [
+  "M307.74,0h4.15v299.21h0c-2.29,0-4.15-1.86-4.15-4.15V0h0Z",
+  "M323.82,2.19h0c2.29,0,4.15,3.56,4.15,7.96v269.29c0,2.2-4.15,13.03-4.15,13.03V2.19Z",
+  "M315.78,0h4.15v295.06c0,2.29-1.86,4.15-4.15,4.15h0V0h0Z",
+  "M303.84,2.7h0c-2.29,0-4.15,3.56-4.15,7.96v269.29c0,2.2,4.15,13.03,4.15,13.03V2.7Z",
+  "M605.15,279.37c.15,3.47.23,50.09.23,53.62,0,110.25-116.09,205.47-263.56,214.88v.57c68.81-4.29,132.76-26.02,182.2-62.29,55.69-40.86,103.36-95.25,103.36-153.16,0-.03,0-.07,0-.1,0-6.43-1.61-12.76-4.52-18.5l-17.71-35.01Z",
+  "M22.23,279.38c-.15,3.47-.23,50.09-.23,53.62,0,110.25,116.09,205.47,263.56,214.87v.57c-68.81-4.29-132.76-26.02-182.2-62.29C47.67,445.3,0,390.9,0,332.99c0-.03,0-.07,0-.1,0-6.43,1.61-12.76,4.52-18.5l17.71-35.01Z",
+  "M335.21,108.28v177.6h110.06s8,0,8,0l-.19,42.65s-3.34-11.63-13.81-11.63-93.17,0-93.17,0v157.21s196-6,196-161c0-155-206.9-240.32-206.9-240.32v35.5Z",
+  "M292.46,108.28v177.6h-110.06s-8,0-8,0l.19,42.65s3.34-11.63,13.81-11.63,93.17,0,93.17,0v157.21s-196-6-196-161,206.9-240.32,206.9-240.32v35.5Z"
+];
+const b64 = (s) => (typeof btoa === "function" ? btoa(s) : Buffer.from(s).toString("base64"));
+
+/** Data-URI del logo aplanado en un color sólido. */
+export function logoDataUri(color = "#1d1d1b") {
+  const body = LOGO_PATHS.map((d) => `<path d="${d}" fill="${color}"/>`).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${LOGO_VB}">${body}</svg>`;
+  return `data:image/svg+xml;base64,${b64(svg)}`;
+}
+
+/** Marca de agua por defecto: laúd plano oscuro (sobre pergamino claro). */
+export const LOGO_WATERMARK = logoDataUri("#1d1d1b");

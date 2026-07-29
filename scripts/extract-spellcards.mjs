@@ -164,6 +164,25 @@ function combatBits(item, level) {
   return { save, toHit, damageParts, scaling };
 }
 
+/** Clave de deduplicado independiente del idioma: el mismo hechizo en EN y ES
+ *  comparte libro + página (system.source), nivel y escuela (keys, no labels).
+ *  Si no hay source usable, cae al nombre. Nivel+escuela evita falsos positivos
+ *  entre hechizos distintos que compartan página. */
+export function spellDedupKey(s, level, schoolKey) {
+  const sys = s?.system || {};
+  // 1) Origen del compendio: mismo UUID entre idiomas y entre copias repetidas.
+  const srcId = s?.flags?.core?.sourceId || s?._stats?.compendiumSource;
+  if (srcId) return `id|${srcId}`;
+  // 2) Libro + página del source (independiente del idioma).
+  const src = sys.source;
+  const book = (src && typeof src === "object" ? src.book : src) || "";
+  const page = (src && typeof src === "object" ? src.page : "") || "";
+  if (book && String(page).trim())
+    return `src|${level}|${schoolKey}|${book}|${String(page).trim()}`;
+  // 3) Último recurso: nombre.
+  return `name|${level}|${(s?.name || "").toLowerCase().trim()}`;
+}
+
 export async function extractSpellCards(actor) {
   const C = CONFIG.DND5E ?? {};
   const TE = getTextEditor();
@@ -223,23 +242,33 @@ export async function extractSpellCards(actor) {
       ritual: props.includes("ritual"),
       save, toHit, damageParts, scaling,
       descHTML,
-      sourceRef: sourceRef(s)
+      sourceRef: sourceRef(s),
+      _dk: spellDedupKey(s, level, schoolKey)
     };
   }));
 
   spells.sort((a, b) => (a.level - b.level) || a.name.localeCompare(b.name, game.i18n.lang));
 
-  // Deduplicado opcional (mismo nombre + nivel), apagado por defecto.
+  // Deduplicado opcional: agrupa por hechizo (independiente del idioma) y, si
+  // hay par EN/ES, conserva la versión que coincide con el idioma del juego.
   let outSpells = spells;
   try {
     if (game.settings.get("gg-sheet-export", "spellCardDedupe")) {
-      const seen = new Set();
-      outSpells = spells.filter((s) => {
-        const k = `${s.level}|${(s.name || "").toLowerCase()}`;
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
+      const langES = (game.i18n.lang || "es").toLowerCase().startsWith("es");
+      const esScore = (sp) => {
+        if (!langES) return 0;
+        const t = `${sp.name || ""} ${sp.descHTML || ""}`.toLowerCase();
+        return (t.match(/[áéíóúñ¿¡]/g) || []).length * 2
+             + (t.match(/\b(el|la|los|las|una?|del|que|con|para|criatura|conjuro|objetivo|nivel|hasta)\b/g) || []).length;
+      };
+      const keyOf = (sp) => sp._dk || `name|${sp.level}|${(sp.name || "").toLowerCase()}`;
+      const best = new Map();
+      for (const sp of spells) {
+        const k = keyOf(sp);
+        const cur = best.get(k);
+        if (!cur || esScore(sp) > esScore(cur)) best.set(k, sp);
+      }
+      outSpells = spells.filter((sp) => best.get(keyOf(sp)) === sp);
     }
   } catch (e) { /* ajuste no registrado: sin deduplicado */ }
 
