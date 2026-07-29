@@ -172,7 +172,7 @@ export function buildThemeTiles(currentId = "cronicas") {
 const OCT = (c) => `polygon(${c} 0,calc(100% - ${c}) 0,100% ${c},100% calc(100% - ${c}),calc(100% - ${c}) 100%,${c} 100%,0 calc(100% - ${c}),0 ${c})`;
 
 export const CARDS_CSS = `
-.ggse-cards { color:var(--card-ink); }
+.ggse-cards { color:var(--card-ink); print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 .ggse-cards * { box-sizing:border-box; }
 
 .ggse-sheet { display:grid; grid-template-columns:repeat(3, 63mm); grid-template-rows:repeat(3, 88mm);
@@ -189,8 +189,9 @@ export const CARDS_CSS = `
 /* marca de agua: <img> real (no background) para que la impresión la incluya */
 .ggse-card .c-wm { position:absolute; right:-9mm; bottom:-11mm; height:64mm; width:auto;
   opacity:0.05; pointer-events:none; user-select:none; z-index:0; }
+.ggse-card .c-bg { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
 .ggse-card.ggse-blank .c-wm { display:none; }
-.ggse-card > *:not(.c-wm) { position:relative; z-index:2; }
+.ggse-card > *:not(.c-wm):not(.c-bg) { position:relative; z-index:2; }
 
 /* marco octagonal doble (color por --card-frame) */
 .ggse-front::before, .ggse-back::before { content:""; position:absolute; inset:2.4mm; z-index:1;
@@ -229,9 +230,9 @@ export const CARDS_CSS = `
 
 .ggse-front .c-tags { display:flex; gap:1mm; margin-top:1.2mm; }
 .ggse-front .ggse-tag { font-size:5.9pt; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
-  padding:0.4mm 1.2mm; border-radius:0.8mm; color:var(--card-paper); }
-.ggse-front .ggse-tag.conc { background:var(--card-wine); }
-.ggse-front .ggse-tag.rit { background:var(--card-amber); }
+  padding:0.4mm 1.2mm; border-radius:0.8mm; background:transparent; border:0.18mm solid currentColor; }
+.ggse-front .ggse-tag.conc { color:var(--card-wine); }
+.ggse-front .ggse-tag.rit { color:var(--card-amber); }
 
 .ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.6mm;
   font-size:7.4pt; line-height:1.32; text-align:justify; hyphens:auto; color:var(--card-ink); }
@@ -319,9 +320,19 @@ function frontCard(sp, id, themeId, decorative) {
   </div>`;
 }
 
+/** Fondo oscuro del dorso como imagen (los fondos CSS no siempre imprimen;
+ *  las imágenes sí, igual que la marca de agua). Color según --card-back del theme. */
+function backFill(themeId) {
+  const t = THEMES[themeId] ?? THEMES.cronicas;
+  const color = (t.vars && t.vars["--card-back"]) || "#1d1d1b";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="63" height="88"><rect width="63" height="88" fill="${color}"/></svg>`;
+  return `<img class="c-bg" src="data:image/svg+xml;base64,${btoa(svg)}" alt="">`;
+}
+
 function backCard(sp, id, themeId, decorative) {
   if (decorative) {
     return `<div class="ggse-card ggse-back deco">
+    ${backFill(themeId)}
     ${watermark(themeId)}
     <div class="b-kick">${BRAND}</div>
     <div class="b-name">${esc(sp.name)}</div>
@@ -333,6 +344,7 @@ function backCard(sp, id, themeId, decorative) {
     ? `▸ ${esc(sp.sourceRef)}`
     : `▸ ${loc("GGSE.Cards.SeeManual")}`;
   return `<div class="ggse-card ggse-back desc">
+    ${backFill(themeId)}
     ${watermark(themeId)}
     <div class="b-head"><div class="b-name">${esc(sp.name)}</div><div class="b-sub">${esc(sp.levelLabel)}</div></div>
     ${sp.material ? `<div class="b-material">${loc("GGSE.Cards.Material")}: ${esc(sp.material)}</div>` : ""}
@@ -460,7 +472,7 @@ export function buildCardsPrintHTML(data, themeId = "cronicas") {
 ${themeStyle(themeId)}
 ${CARDS_CSS}
   @page { size:A4; margin:16mm 10mm; }
-  html, body { margin:0; padding:0; }
+  html, body { margin:0; padding:0; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   .ggse-sheet { break-after:page; }
   .ggse-cards > .ggse-sheet:last-of-type { break-after:auto; }
 </style>
