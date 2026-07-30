@@ -1,0 +1,535 @@
+/**
+ * GG Sheet Export — spellcards-print.mjs
+ * Tarjetas de conjuros imprimibles, tamaño póker (63×88 mm), 9 por hoja A4, a
+ * doble faz: una hoja de frentes (datos) y otra de dorsos (texto) con las
+ * columnas espejadas para que cada dorso caiga detrás de su frente al imprimir
+ * doble cara (encuadernado por el lado largo).
+ *
+ * Hechizos largos (Wish y compañía): el dorso se auto-ajusta y, si aun al mínimo
+ * legible no entra, se resume y se muestra la referencia al manual — siempre en
+ * una sola tarjeta, como las oficiales.
+ *
+ * Themes: la estética sale de un tema (colores + fuentes). Hoy va uno solo
+ * ("cronicas"); sumar packs de Patreon después es agregar entradas a THEMES.
+ */
+
+const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const loc = (k) => game.i18n.localize(k);
+const BRAND = "CRÓNICAS BÁRDICAS";
+
+import { LOGO_WATERMARK, logoDataUri } from "./spellcards-logo.mjs";
+
+/* ---------- íconos de tipo de daño (SVG embebido, sin dependencias) ----------
+   Vectoriales: se ven igual en el visor y en el PDF, y no dependen de Font
+   Awesome. El texto de la descripción aclara el tipo en palabras. */
+const DAMAGE_COLORS = {
+  acid: "#6ea82f", bludgeoning: "#8a929c", cold: "#2fa8d6", fire: "#d9463a",
+  force: "#6a5bd6", lightning: "#d99e00", necrotic: "#6f6580", piercing: "#8a929c",
+  poison: "#3f8b57", psychic: "#c04f96", radiant: "#d99a2b", slashing: "#8a929c",
+  thunder: "#7a52c8"
+};
+
+const DAMAGE_ICONS = {
+  fire: '<path d="M12 2c1.6 3 4 4.6 4 8a4 4 0 1 1-8 0c0-1.4.7-2.7 1.7-3.6C9.3 8.8 10.7 9.4 11 8c.3-1.5-.2-3.6 1-6z"/>',
+  cold: '<g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17"/></g>',
+  lightning: '<path d="M13 2 5 13h5l-2 9 10-13h-6l3-7z"/>',
+  thunder: '<path d="M12 2l1.7 4.9 4-2.6-1.4 4.6 4.7.6-3.8 2.9 3.8 2.9-4.7.6 1.4 4.6-4-2.6L12 22l-1.7-4.9-4 2.6 1.4-4.6L3 14.9l3.8-2.9L3 9.1l4.7-.6L6.3 3.9l4 2.6z"/>',
+  acid: '<path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  poison: '<path d="M10 2h4v5.2l4 9.1A2 2 0 0 1 16.2 19H7.8A2 2 0 0 1 6 16.3L10 7.2z"/><circle cx="12" cy="14" r="1.5" fill="#fff"/>',
+  necrotic: '<path d="M12 3a7 7 0 0 0-7 7c0 2.3 1.1 3.5 2 5v2h2v-2h2v2h2v-2c.9-1.5 2-2.7 2-5a7 7 0 0 0-7-7z"/><circle cx="9.4" cy="10.4" r="1.4" fill="#fff"/><circle cx="14.6" cy="10.4" r="1.4" fill="#fff"/>',
+  radiant: '<circle cx="12" cy="12" r="4"/><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></g>',
+  psychic: '<path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="M12 12a1.4 1.4 0 1 1-1.1-1.4 3.4 3.4 0 1 1 2.9 3.7 5.5 5.5 0 1 1-5.3-6.5"/>',
+  force: '<path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/>',
+  bludgeoning: '<rect x="6" y="4" width="10" height="5" rx="1"/><rect x="9.5" y="9" width="3" height="11" rx="1"/>',
+  piercing: '<path d="M12 2l5 8h-3.2v10h-3.6V10H7z"/>',
+  slashing: '<path d="M5 19 17 5l2.2 2.2L7.2 21.2z"/>'
+};
+
+export function damageIcon(type) {
+  const inner = DAMAGE_ICONS[type];
+  if (!inner) return "";
+  const color = DAMAGE_COLORS[type] || "var(--card-ink)";
+  return `<svg class="dmg-ico" viewBox="0 0 24 24" fill="currentColor" style="color:${color}">${inner}</svg>`;
+}
+const FONTS_MARCELLUS_SPECTRAL =
+  "https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap";
+
+export const THEMES = {
+  cronicas: {
+    id: "cronicas",
+    name: "Crónicas Bárdicas",
+    schemaVersion: 1,
+    watermark: LOGO_WATERMARK,
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
+    vars: {
+      "--card-paper": "#f2e9d5", "--card-ink": "#241a12", "--card-back": "#1d1d1b",
+      "--card-back-ink": "#f2e9d5",
+      "--card-amber": "#a97e1e", "--card-amber-b": "#e3ad4b", "--card-wine": "#8a2f3f",
+      "--card-frame": "#8a2f3f", "--card-rule": "#cdbfa6", "--card-dim": "#7a6a52",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
+    }
+  },
+  inksaver: {
+    id: "inksaver",
+    name: "Ahorra Tinta",
+    schemaVersion: 1,
+    watermark: null,
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
+    vars: {
+      "--card-paper": "#ffffff", "--card-ink": "#1a1a1a", "--card-back": "#ffffff",
+      "--card-back-ink": "#1a1a1a",
+      "--card-amber": "#555555", "--card-amber-b": "#222222", "--card-wine": "#444444",
+      "--card-frame": "#8a8a8a", "--card-rule": "#bdbdbd", "--card-dim": "#666666",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
+    }
+  },
+  grimoire: {
+    id: "grimoire",
+    name: "Grimorio Oscuro",
+    schemaVersion: 1,
+    premium: true,
+    buyUrl: "",   // ← link de Ko-fi del pack (igual para todos: vive en código)
+    watermark: null,
+    fontImports: [FONTS_MARCELLUS_SPECTRAL],
+    vars: {
+      "--card-paper": "#04272c", "--card-ink": "#f2e6c8", "--card-back": "#021b1f",
+      "--card-back-ink": "#f2e6c8",
+      "--card-amber": "#c9a24b", "--card-amber-b": "#facc35", "--card-wine": "#c56a4e",
+      "--card-frame": "#e3ad4b", "--card-rule": "#2c4a4a", "--card-dim": "#8aa39b",
+      "--card-title": '"Marcellus SC", Georgia, serif',
+      "--card-body": '"Spectral", Georgia, serif'
+    }
+  }
+};
+
+export const THEME_SCHEMA_VERSION = 1;
+
+/**
+ * Registra un theme de tarjetas desde otro módulo (packs premium/satélite).
+ * Esquema (v1): { id, name, vars?, watermark?, fontImports?, fontCSS?, customCSS? }
+ * - vars: variables CSS (--card-*); lo no definido hereda de "cronicas".
+ * - watermark: data-URL o ruta de imagen; "" o null = sin marca de agua.
+ * - fontImports: array de URLs de hojas de fuentes (se emiten como @import).
+ * - fontCSS: @font-face crudo (ideal: woff2 en base64 → funciona sin red).
+ * - customCSS: CSS extra acotado a .ggse-cards para retoques del pack.
+ * Uso: game.modules.get("gg-sheet-export").api.registerCardTheme({...})
+ */
+export function registerCardTheme(theme) {
+  if (!theme?.id || !theme?.name) {
+    console.warn("gg-sheet-export | registerCardTheme: falta id o name", theme);
+    return false;
+  }
+  THEMES[theme.id] = {
+    schemaVersion: THEME_SCHEMA_VERSION,
+    ...theme,
+    vars: { ...THEMES.cronicas.vars, ...(theme.vars ?? {}) },
+    watermark: theme.watermark === undefined ? THEMES.cronicas.watermark : theme.watermark
+  };
+  console.log(`gg-sheet-export | theme de tarjetas registrado: ${theme.id} (${theme.name})`);
+  return true;
+}
+
+/**
+ * ¿El theme está disponible para USARSE? Es usable si es free, o si un satélite
+ * lo registró (registrarlo borra el flag premium del stub). Los stubs premium
+ * del catálogo — que existen solo para mostrar la tile "Conseguir" — quedan
+ * bloqueados hasta que el pack esté instalado y activo. Única fuente de verdad
+ * de "disponible", tanto para el dropdown de Configure Settings como al exportar.
+ */
+export function isThemeAvailable(id) {
+  const t = THEMES[id];
+  return !!t && !t.premium && !t.soon;
+}
+
+/** Id si es usable; si no (premium no instalado, desinstalado o inexistente),
+ *  cae al theme free por defecto. Se usa al leer el setting antes de exportar. */
+export function resolveThemeId(id) {
+  return isThemeAvailable(id) ? id : "cronicas";
+}
+
+export function themeStyle(themeId = "cronicas") {
+  const t = THEMES[themeId] ?? THEMES.cronicas;
+  const imports = (t.fontImports ?? []).map((u) => `@import url("${u}");`).join("\n");
+  const vars = Object.entries(t.vars).map(([k, v]) => `${k}:${v};`).join("");
+  return `${imports}\n${t.fontCSS ?? ""}\n.ggse-cards{${vars}}\n${t.customCSS ?? ""}`;
+}
+
+/** Arma las tiles del selector: cada una es una mini-carta con la paleta real
+ *  del theme, más su estado (actual / gratis / premium con CTA de compra). */
+export function buildThemeTiles(currentId = "cronicas") {
+  return Object.values(THEMES).map((t) => {
+    const v = t.vars || {};
+    const paper = v["--card-paper"] || "#fbf7ee";
+    const ink = v["--card-ink"] || "#241a12";
+    const bar = v["--card-amber-b"] || "#e0a23c";
+    const sub = v["--card-wine"] || "#8a2f3f";
+    const line = v["--card-dim"] || "#8a7a5c";
+    const isCurrent = t.id === currentId;
+    const premium = !!t.premium;
+    const soon = !!t.soon;
+    const locked = premium || soon;
+
+    let badge = loc("GGSE.Cards.BadgeFree"), badgeCls = "free";
+    if (isCurrent) { badge = loc("GGSE.Cards.BadgeCurrent"); badgeCls = "now"; }
+    else if (premium) { badge = loc("GGSE.Cards.BadgePremium"); badgeCls = "pro"; }
+    else if (soon) { badge = loc("GGSE.Cards.BadgeSoon"); badgeCls = "pro"; }
+
+    const overlay = premium
+      ? `<div class="ggse-buy"><span class="cta" data-buy="${esc(t.buyUrl || "")}">${loc("GGSE.Cards.Buy")}</span></div>`
+      : (soon ? `<div class="ggse-buy soon"><span class="cta">${loc("GGSE.Cards.BadgeSoon")}</span></div>` : "");
+
+    return `<div class="ggse-tile ${isCurrent ? "sel" : ""}" data-theme="${esc(t.id)}" data-locked="${locked}">
+      <span class="ggse-check">✓</span>
+      <div class="ggse-swatch ${locked ? "locked" : ""}" style="background:${esc(paper)}; color:${esc(ink)}">
+        ${overlay}
+        <div class="bar" style="background:${esc(bar)}"></div>
+        <div class="body">
+          <div class="sname" style="color:${esc(ink)}">${loc("GGSE.Cards.SampleSpell")}</div>
+          <div class="slvl" style="color:${esc(sub)}">${loc("GGSE.Level")} 3 · ${loc("GGSE.Cards.SampleSchool")}</div>
+          <div class="line" style="background:${esc(line)}"></div>
+          <div class="line" style="background:${esc(line)}; width:80%"></div>
+        </div>
+      </div>
+      <div class="ggse-tname">${esc(t.name)} <span class="ggse-badge ${badgeCls}">${esc(badge)}</span></div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------- CSS de tarjeta (compartido pantalla + impresión) ----------
+   Look "Crónicas Bárdicas" (blueprint): marco octagonal de doble filete por
+   pseudo-elementos (color por --card-frame), kicker + título + subtítulo
+   centrados, divisores rombo, stats en 2 columnas, dorso híbrido (decorativo
+   o descripción), y print-color-adjust para que impriman los fondos. */
+const OCT = (c) => `polygon(${c} 0,calc(100% - ${c}) 0,100% ${c},100% calc(100% - ${c}),calc(100% - ${c}) 100%,${c} 100%,0 calc(100% - ${c}),0 ${c})`;
+
+export const CARDS_CSS = `
+.ggse-cards { color:var(--card-ink); print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+.ggse-cards * { box-sizing:border-box; }
+
+.ggse-sheet { display:grid; grid-template-columns:repeat(3, 63mm); grid-template-rows:repeat(3, 88mm);
+  justify-content:center; align-content:center; }
+.ggse-sheet-label { display:none; }
+
+.ggse-card { width:63mm; height:88mm; overflow:hidden; position:relative;
+  padding:5.2mm; display:flex; flex-direction:column;
+  background:var(--card-paper); color:var(--card-ink); font-family:var(--card-body);
+  clip-path:${OCT("3.2mm")};
+  print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+.ggse-card.ggse-blank { background:transparent; clip-path:none; }
+
+/* marca de agua: <img> real (no background) para que la impresión la incluya */
+.ggse-card .c-wm { position:absolute; right:-9mm; bottom:-11mm; height:64mm; width:auto;
+  opacity:0.05; pointer-events:none; user-select:none; z-index:0; }
+.ggse-card .c-bg { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+.ggse-card.ggse-blank .c-wm { display:none; }
+.ggse-card > *:not(.c-wm):not(.c-bg) { position:relative; z-index:2; }
+
+/* marco octagonal doble (color por --card-frame) */
+.ggse-front::before, .ggse-back::before { content:""; position:absolute; inset:2.4mm; z-index:1;
+  border:0.35mm solid var(--card-frame); pointer-events:none; clip-path:${OCT("1.6mm")}; }
+.ggse-front::after, .ggse-back::after { content:""; position:absolute; inset:3mm; z-index:1;
+  border:0.2mm solid var(--card-frame); pointer-events:none; clip-path:${OCT("1.2mm")}; }
+
+/* ---- frente ---- */
+.ggse-front .c-kick { font-family:var(--card-title); font-size:5.2pt; letter-spacing:0.28em;
+  text-transform:uppercase; color:var(--card-wine); text-align:center; }
+.ggse-front .c-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
+  line-height:1.02; color:var(--card-ink); text-align:center; margin-top:1.1mm; }
+.ggse-front .c-sub { font-size:8pt; font-style:italic; color:var(--card-wine);
+  text-align:center; margin-top:0.4mm; }
+.ggse-front .c-rule { height:0.3mm; background:var(--card-amber); margin:1.8mm 0 1.6mm; position:relative; }
+.ggse-front .c-rule::after { content:""; position:absolute; left:50%; top:50%; width:1.5mm; height:1.5mm;
+  background:var(--card-wine); transform:translate(-50%,-50%) rotate(45deg); }
+
+.ggse-front .c-stats { display:grid; grid-template-columns:1fr 1fr; gap:0.8mm 3mm;
+  font-size:7.4pt; line-height:1.3; }
+.ggse-front .c-row { display:flex; flex-direction:column; }
+.ggse-front .c-k { font-family:var(--card-title); font-size:5.8pt; letter-spacing:0.06em;
+  text-transform:uppercase; color:var(--card-wine); }
+.ggse-front .c-v { font-weight:600; color:var(--card-ink); }
+
+.ggse-front .c-combat { margin-top:1.8mm; display:flex; flex-wrap:wrap; gap:1mm; align-items:center; }
+.ggse-front .cbadge { display:inline-flex; align-items:center; gap:0.6mm; font-size:6.6pt; font-weight:700;
+  padding:0.5mm 1.4mm; border-radius:1mm; border:0.18mm solid var(--card-amber);
+  color:var(--card-ink); background:transparent; }
+.ggse-front .cbadge.save { border-color:var(--card-wine); color:var(--card-wine); }
+.ggse-front .dmg-ico { width:8pt; height:8pt; display:inline-block; flex:0 0 auto; }
+
+.ggse-front .c-scaling { display:flex; flex-wrap:wrap; gap:0 2.4mm; margin-top:1.2mm;
+  font-size:6.3pt; color:var(--card-dim); }
+.ggse-front .c-scaling b { color:var(--card-ink); font-weight:700; }
+
+.ggse-front .c-tags { display:flex; gap:1mm; margin-top:1.2mm; }
+.ggse-front .ggse-tag { font-size:5.9pt; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
+  padding:0.4mm 1.2mm; border-radius:0.8mm; background:transparent; border:0.18mm solid currentColor; }
+.ggse-front .ggse-tag.conc { color:var(--card-wine); }
+.ggse-front .ggse-tag.rit { color:var(--card-amber); }
+
+.ggse-front .c-desc { flex:1 1 auto; min-height:0; overflow:hidden; margin-top:1.6mm;
+  font-size:8pt; line-height:1.34; text-align:justify; hyphens:auto; color:var(--card-ink); }
+.ggse-front .c-desc p { margin:0 0 1.2mm; }
+.ggse-front .c-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
+
+/* ---- dorso (siempre oscuro; --card-back) ---- */
+.ggse-back { background:var(--card-back); color:var(--card-back-ink); }
+
+/* decorativo: hechizo corto (todo entró en el frente) */
+.ggse-back.deco { align-items:center; justify-content:center; text-align:center; gap:2.4mm; }
+.ggse-back.deco .b-kick { font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.3em;
+  text-transform:uppercase; color:var(--card-amber); }
+.ggse-back.deco .b-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
+  line-height:1.1; color:var(--card-amber-b); }
+.ggse-back.deco .b-rombo { width:2.6mm; height:2.6mm; background:var(--card-amber-b); transform:rotate(45deg); }
+.ggse-back.deco .b-logo { height:20mm; width:auto; }
+.ggse-back.deco .b-foot { position:absolute; bottom:5.4mm; left:0; right:0; text-align:center;
+  font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--card-amber); }
+
+/* descripción: hechizo largo (letras claras sobre el dorso oscuro) */
+.ggse-back.desc .b-head { display:flex; justify-content:space-between; align-items:baseline; gap:1.4mm;
+  border-bottom:0.2mm solid var(--card-amber); padding-bottom:1mm; margin-bottom:1.6mm; }
+.ggse-back.desc .b-name { font-family:var(--card-title); font-weight:400; font-size:9pt; line-height:1.03;
+  color:var(--card-amber-b); }
+.ggse-back.desc .b-sub { font-family:var(--card-title); font-size:5.4pt; text-transform:uppercase;
+  letter-spacing:0.06em; color:var(--card-amber); white-space:nowrap; }
+.ggse-back.desc .b-material { font-size:6pt; font-style:italic; color:var(--card-amber);
+  margin-bottom:1mm; line-height:1.15; }
+.ggse-back.desc .b-desc { flex:1; min-height:0; overflow:hidden; font-size:8pt; line-height:1.34;
+  text-align:justify; hyphens:auto; color:var(--card-back-ink); }
+.ggse-back.desc .b-desc p { margin:0 0 1.2mm; }
+.ggse-back.desc .b-desc ul { margin:0 0 1.2mm 3.4mm; padding:0; }
+.ggse-back.desc .b-desc li { margin:0 0 0.4mm; }
+.ggse-back.desc .b-ref { display:none; font-family:var(--card-title); font-size:6pt; letter-spacing:0.1em;
+  color:var(--card-amber); border-top:0.2mm solid var(--card-amber); padding-top:1mm; margin-top:1mm; }
+`;
+
+/* ---------- constructores ---------- */
+
+function watermark(themeId) {
+  const src = (THEMES[themeId] ?? THEMES.cronicas).watermark;
+  return src ? `<img class="c-wm" src="${src}" alt="">` : "";
+}
+
+function frontCard(sp, id, themeId, decorative) {
+  const stat = (k, v) => `<div class="c-row"><div class="c-k">${esc(k)}</div><div class="c-v">${esc(v)}</div></div>`;
+  const combat = [];
+  if (sp.toHit) combat.push(`<span class="cbadge atk">${loc("GGSE.Cards.Attack")} ${esc(sp.toHit)}</span>`);
+  if (sp.save) combat.push(`<span class="cbadge save">${esc(sp.save)}</span>`);
+  for (const d of sp.damageParts || []) {
+    combat.push(`<span class="cbadge dmg">${esc(d.formula)}${damageIcon(d.type)}</span>`);
+  }
+
+  const tags = [];
+  if (sp.concentration) tags.push(`<span class="ggse-tag conc">${loc("GGSE.Cards.Conc")}</span>`);
+  if (sp.ritual) tags.push(`<span class="ggse-tag rit">${loc("GGSE.Cards.Ritual")}</span>`);
+
+  // Escalado: trucos por nivel de pj (N5/N11/N17); con nivel, incremento/espacio.
+  let scaling = "";
+  const N = loc("GGSE.Cards.LvlAbbr");
+  if (sp.scaling?.cantrip) {
+    scaling = `<div class="c-scaling">${["5", "11", "17"].map((lv, i) =>
+      `<span><b>${N}${lv}</b> ${esc(sp.scaling.cantrip[i])}</span>`).join("")}</div>`;
+  } else if (sp.scaling?.upcast) {
+    scaling = `<div class="c-scaling"><span>${loc("GGSE.Cards.PerSlot")} +${esc(sp.scaling.upcast)}</span></div>`;
+  }
+
+  return `<div class="ggse-card ggse-front${decorative ? " deco" : ""}" style="--school:${sp.schoolColor}">
+    ${watermark(themeId)}
+    <div class="c-kick">${BRAND}</div>
+    <div class="c-name">${esc(sp.name)}</div>
+    <div class="c-sub">${esc(sp.school)} · ${esc(sp.levelLabel)}</div>
+    <div class="c-rule"></div>
+    <div class="c-stats">
+      ${stat(loc("GGSE.Cards.Casting"), sp.activation)}
+      ${stat(loc("GGSE.Cards.Range"), sp.range)}
+      ${stat(loc("GGSE.Cards.Components"), sp.components)}
+      ${stat(loc("GGSE.Cards.Duration"), sp.duration)}
+    </div>
+    ${combat.length ? `<div class="c-combat">${combat.join("")}</div>` : ""}
+    ${scaling}
+    ${tags.length ? `<div class="c-tags">${tags.join("")}</div>` : ""}
+    <div class="c-desc" data-spell="${id}">${decorative ? (sp.descHTML || "") : ""}</div>
+  </div>`;
+}
+
+/** Fondo oscuro del dorso como imagen (los fondos CSS no siempre imprimen;
+ *  las imágenes sí, igual que la marca de agua). Color según --card-back del theme. */
+function backFill(themeId) {
+  const t = THEMES[themeId] ?? THEMES.cronicas;
+  const color = (t.vars && t.vars["--card-back"]) || "#1d1d1b";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="63" height="88"><rect width="63" height="88" fill="${color}"/></svg>`;
+  return `<img class="c-bg" src="data:image/svg+xml;base64,${btoa(svg)}" alt="">`;
+}
+
+/** Logo del laúd (plano) en el color de acento del theme, para el dorso decorativo. */
+function logoMark(themeId) {
+  const t = THEMES[themeId] ?? THEMES.cronicas;
+  const color = (t.vars && t.vars["--card-amber-b"]) || "#e3ad4b";
+  return `<img class="b-logo" src="${logoDataUri(color)}" alt="">`;
+}
+
+function backCard(sp, id, themeId, decorative) {
+  if (decorative) {
+    return `<div class="ggse-card ggse-back deco">
+    ${backFill(themeId)}
+    <div class="b-kick">${BRAND}</div>
+    ${logoMark(themeId)}
+    <div class="b-name">${esc(sp.name)}</div>
+    <div class="b-foot">GGWP</div>
+  </div>`;
+  }
+  const refText = sp.sourceRef
+    ? `▸ ${esc(sp.sourceRef)}`
+    : `▸ ${loc("GGSE.Cards.SeeManual")}`;
+  return `<div class="ggse-card ggse-back desc">
+    ${backFill(themeId)}
+    ${watermark(themeId)}
+    <div class="b-head"><div class="b-name">${esc(sp.name)}</div><div class="b-sub">${esc(sp.levelLabel)}</div></div>
+    ${sp.material ? `<div class="b-material">${loc("GGSE.Cards.Material")}: ${esc(sp.material)}</div>` : ""}
+    <div class="b-desc" data-spell="${id}">${sp.descHTML || ""}</div>
+    <div class="b-ref">${refText}</div>
+  </div>`;
+}
+
+const blank = () => `<div class="ggse-card ggse-blank"></div>`;
+
+/** Índice espejado por columnas para doble faz (encuadernado lado largo). */
+function mirrorIndex(i) {
+  const row = Math.floor(i / 3), col = i % 3;
+  return row * 3 + (2 - col);
+}
+
+/**
+ * Cuerpo completo: hojas de frentes y dorsos intercaladas por grupo de 9.
+ * @param {object} data  salida de extractSpellCards
+ * @param {string} themeId
+ * @param {{ mirror?: boolean }} opts  mirror=true para impresión doble faz;
+ *   false para la vista previa (orden natural, más fácil de leer).
+ */
+/** Máximo de caracteres de descripción que entran cómodos en el frente.
+ *  Por debajo → dorso decorativo (todo en el frente); por encima → dorso de
+ *  descripción. Ajustable si algún hechizo queda justo. */
+const FRONT_DESC_MAX = 300;
+const descLen = (sp) => String(sp?.descHTML || "").replace(/<[^>]+>/g, "").trim().length;
+
+export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {}) {
+  const chunks = [];
+  for (let i = 0; i < data.spells.length; i += 9) chunks.push(data.spells.slice(i, i + 9));
+  if (!chunks.length) return `<div class="ggse-cards"><p style="text-align:center">${loc("GGSE.Cards.NoSpells")}</p></div>`;
+
+  const sheets = chunks.map((group, gi) => {
+    const fronts = [];
+    const backs = new Array(9).fill(null);
+    for (let i = 0; i < 9; i++) {
+      const sp = group[i];
+      const gid = gi * 9 + i;
+      const deco = sp ? descLen(sp) <= FRONT_DESC_MAX : false;
+      fronts.push(sp ? frontCard(sp, gid, themeId, deco) : blank());
+      const bi = mirror ? mirrorIndex(i) : i;
+      backs[bi] = sp ? backCard(sp, gid, themeId, deco) : blank();
+    }
+    const label = chunks.length > 1 ? ` ${gi + 1}/${chunks.length}` : "";
+    return `
+      <div class="ggse-sheet-label">${loc("GGSE.Cards.Fronts")}${label}</div>
+      <section class="ggse-sheet ggse-fronts">${fronts.join("")}</section>
+      <div class="ggse-sheet-label">${loc("GGSE.Cards.Backs")}${label}${mirror ? ` · ${loc("GGSE.Cards.Mirrored")}` : ""}</div>
+      <section class="ggse-sheet ggse-backs">${backs.map((b) => b ?? blank()).join("")}</section>`;
+  }).join("");
+
+  return `<div class="ggse-cards">${sheets}</div>`;
+}
+
+/* ---------- auto-ajuste (puro DOM, se reusa en visor e impresión) ---------- */
+
+export function fitSpellCards(root) {
+  // Frentes: achica el nombre si desborda su caja.
+  root.querySelectorAll(".ggse-front .c-name").forEach((el) => {
+    let pt = 13;
+    while (el.scrollHeight > el.clientHeight + 1 && pt > 8) { pt -= 0.5; el.style.fontSize = pt + "pt"; }
+  });
+
+  // Dorso decorativo: la descripción va en el frente; achicar si desborda.
+  root.querySelectorAll(".ggse-front.deco .c-desc").forEach((el) => {
+    let pt = 8;
+    while (el.scrollHeight > el.clientHeight + 1 && pt > 6) { pt -= 0.25; el.style.fontSize = pt + "pt"; }
+  });
+
+  // Descripciones: cada dorso se empareja con el frente por data-spell.
+  root.querySelectorAll(".ggse-back .b-desc").forEach((back) => {
+    const id = back.getAttribute("data-spell");
+    const card = back.closest(".ggse-card");
+    const ref = card ? card.querySelector(".b-ref") : null;
+    const front = id != null ? root.querySelector(`.ggse-front .c-desc[data-spell="${id}"]`) : null;
+
+    const fitsBack = () => back.scrollHeight <= back.clientHeight + 1;
+
+    // 1) ¿Entra todo en el dorso a tamaño base? → corto/medio, frente limpio.
+    back.style.fontSize = "8pt";
+    if (fitsBack()) return;
+
+    // 2) LARGO: la descripción arranca en el frente y sigue en el dorso.
+    if (front) {
+      front.style.fontSize = "8pt";
+      const fitsFront = () => front.scrollHeight <= front.clientHeight + 1;
+      let guard = 0;
+      while (fitsFront() && back.firstChild && guard++ < 4000) {
+        front.appendChild(back.firstChild);
+      }
+      // El último nodo hizo desbordar el frente: devolvelo al inicio del dorso.
+      if (!fitsFront() && front.lastChild) back.insertBefore(front.lastChild, back.firstChild);
+    }
+
+    // 3) El resto va al dorso: achicar y, si no entra, resumir + referencia.
+    let pt = 8;
+    back.style.fontSize = pt + "pt";
+    while (!fitsBack() && pt > 6.5) { pt -= 0.25; back.style.fontSize = pt + "pt"; }
+    if (fitsBack()) return;
+    if (ref) ref.style.display = "block";
+    let g = 0;
+    while (!fitsBack() && back.childNodes.length && g++ < 4000) {
+      const last = back.childNodes[back.childNodes.length - 1];
+      if (last.nodeType === 3 || !(last.textContent || "").trim()) { back.removeChild(last); continue; }
+      const words = (last.textContent || "").trim().split(/\s+/);
+      if (words.length > 4) { words.pop(); last.textContent = words.join(" ") + "…"; }
+      else { back.removeChild(last); }
+    }
+  });
+}
+
+/* ---------- documento de impresión ---------- */
+
+export function buildCardsPrintHTML(data, themeId = "cronicas") {
+  const body = buildCardsBody(data, themeId, { mirror: true });
+  return `<!DOCTYPE html>
+<html lang="${game.i18n.lang || "es"}">
+<head>
+<meta charset="utf-8">
+<title>${esc(data.actorName)} — ${loc("GGSE.Cards.Title")}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+${themeStyle(themeId)}
+${CARDS_CSS}
+  @page { size:A4; margin:16mm 10mm; }
+  html, body { margin:0; padding:0; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .ggse-sheet { break-after:page; }
+  .ggse-cards > .ggse-sheet:last-of-type { break-after:auto; }
+</style>
+</head>
+<body>
+${body}
+<script>
+${fitSpellCards.toString()}
+window.addEventListener("load", () => {
+  const fonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const timeout = new Promise((r) => setTimeout(r, 2500));
+  Promise.race([fonts, timeout]).then(() => {
+    try { fitSpellCards(document); } catch (e) {}
+    setTimeout(() => { window.focus(); window.print(); }, 80);
+  });
+});
+</script>
+</body>
+</html>`;
+}
