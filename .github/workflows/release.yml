@@ -1,16 +1,27 @@
-# Publica una release de Foundry automáticamente al pushear un tag "vX.Y.Z".
-# Inyecta la versión y las URLs correctas en module.json, arma module.zip
-# con la estructura que Foundry espera, y crea la release con ambos assets.
+# =============================================================================
+# GegesVTT - Workflow de release CANONICO
+#
+# Este archivo es IDENTICO en todos los repos de la suite. No lo edites por
+# repo: si necesitas cambiar algo, cambialo aca y copialo a los demas.
+#
+# Todo lo que varia entre modulos (titulo, carpetas, version) se lee de
+# module.json en tiempo de ejecucion.
+#
+# Uso:
+#   1. Bumpea "version" en module.json
+#   2. git commit + git push
+#   3. git tag vX.Y.Z + git push origin vX.Y.Z
+#
+# Si el paso 1 se olvida, el workflow FALLA a proposito (ver "Guard").
+# =============================================================================
 
 name: Release
 
-# Se dispara solo cuando se pushea un tag que empiece con "v".
 on:
   push:
     tags:
       - "v*"
 
-# Permiso mínimo para que la Action pueda crear la release en este repo.
 permissions:
   contents: write
 
@@ -18,21 +29,42 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      # 1. Traer el código del repo en el commit que tiene el tag.
+      # 1. Traer el codigo del repo en el commit que tiene el tag.
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Derivar la versión (sin la "v") a partir del nombre del tag.
+      # 2. Derivar la version (sin la "v") a partir del nombre del tag.
       #    Ej: tag "v1.2.2" -> VERSION "1.2.2".
-      - name: Obtener versión del tag
+      - name: Obtener version del tag
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      # 3. Reescribir los campos dinámicos de module.json usando jq.
-      #    - version: la del tag (fuente de verdad única).
-      #    - manifest: siempre apunta a "latest" (para el botón Update).
+      # 3. GUARD: el module.json commiteado tiene que declarar la misma version
+      #    que el tag. Sin este paso, el repo queda mintiendo sobre su version
+      #    (el jq de mas abajo solo reescribe la copia del runner, no el repo).
+      - name: Guard - module.json debe coincidir con el tag
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          MANIFEST_VERSION=$(jq -r '.version' module.json)
+          if [ "$MANIFEST_VERSION" != "$VERSION" ]; then
+            echo "::error::module.json declara '$MANIFEST_VERSION' pero el tag es 'v$VERSION'."
+            echo "::error::Bumpea module.json, commitea, y volve a taguear."
+            exit 1
+          fi
+          echo "OK - module.json y tag coinciden en $VERSION"
+
+      # 4. Leer el titulo del modulo para nombrar la release.
+      #    Asi este workflow no necesita saber en que repo corre.
+      - name: Leer titulo del modulo
+        id: meta
+        run: echo "TITLE=$(jq -r '.title' module.json)" >> "$GITHUB_OUTPUT"
+
+      # 5. Reescribir los campos dinamicos de module.json usando jq.
+      #    - version: la del tag (fuente de verdad unica).
+      #    - manifest: siempre apunta a "latest" (para el boton Update).
       #    - download: apunta al zip de ESTA release concreta.
-      - name: Inyectar versión y URLs en module.json
+      - name: Inyectar version y URLs en module.json
         env:
           VERSION: ${{ steps.version.outputs.VERSION }}
           REPO: ${{ github.repository }}
@@ -47,24 +79,30 @@ jobs:
           echo "----- module.json resultante -----"
           cat module.json
 
-      # 4. Armar module.zip con los archivos en la RAÍZ del zip
+      # 6. Armar module.zip con los archivos en la RAIZ del zip
       #    (module.json en el primer nivel, sin carpeta contenedora).
+      #
+      #    La lista se auto-adapta: solo entra lo que existe en este repo.
+      #    Por eso el mismo workflow sirve para un modulo con templates/ y
+      #    para uno sin. "docs" queda AFUERA a proposito: son screenshots que
+      #    se sirven desde raw.githubusercontent, no hacen falta en el zip.
       - name: Empaquetar module.zip
         run: |
-          zip -r module.zip \
-            module.json \
-            README.md \
-            scripts \
-            templates \
-            styles \
-            lang
+          FILES=""
+          for p in module.json README.md LICENSE CHANGELOG.md scripts styles lang templates assets packs; do
+            [ -e "$p" ] && FILES="$FILES $p"
+          done
+          echo "Incluyendo en el zip:$FILES"
+          zip -r module.zip $FILES
+          echo "----- contenido del zip -----"
+          unzip -l module.zip
 
-      # 5. Crear la release y adjuntar los dos assets sueltos.
-      #    softprops/action-gh-release lee el tag del contexto automáticamente.
+      # 7. Crear la release y adjuntar los dos assets sueltos.
+      #    softprops/action-gh-release lee el tag del contexto automaticamente.
       - name: Publicar release
         uses: softprops/action-gh-release@v2
         with:
-          name: GG Sheet Export ${{ github.ref_name }}
+          name: ${{ steps.meta.outputs.TITLE }} ${{ github.ref_name }}
           files: |
             module.json
             module.zip
