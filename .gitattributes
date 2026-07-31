@@ -1,0 +1,31 @@
+* text=auto
+
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.sh     text eol=lf
+*.mjs    text eol=lf
+*.js     text eol=lf
+*.json   text eol=lf
+*.css    text eol=lf
+*.hbs    text eol=lf
+*.html   text eol=lf
+*.md     text eol=lf
+*.svg    text eol=lf
+LICENSE  text eol=lf
+
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.zip    binary
+*.pdf    binary
+*.ogg    binary
+*.webm   binary
+
+packs/** linguist-vendored
