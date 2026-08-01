@@ -184,7 +184,7 @@ character sheet · print · printable · PDF export · HTML export · interactiv
 
 MIT — © Geges
 
-Part of the **GegesVTT** family: [GG Calendar](https://github.com/GegesVTT/gg-calendar) · [GG Nameforge](https://github.com/GegesVTT/gg-nameforge)
+Part of **Crónicas Bárdicas**, the Foundry VTT module suite by Geges (Gonzalo Gesualdo): [GG Nameforge](https://github.com/GegesVTT/gg-nameforge) · [GG Encounter Lens](https://github.com/GegesVTT/gg-encounter-lens)
 
 ---
 
@@ -334,7 +334,7 @@ ficha de personaje · imprimir · imprimible · exportar PDF · exportar HTML ·
 
 MIT — © Geges
 
-Parte de la familia **GegesVTT**: [GG Calendar](https://github.com/GegesVTT/gg-calendar) · [GG Nameforge](https://github.com/GegesVTT/gg-nameforge)
+Parte de **Crónicas Bárdicas**, la suite de módulos para Foundry VTT de Geges (Gonzalo Gesualdo): [GG Nameforge](https://github.com/GegesVTT/gg-nameforge) · [GG Encounter Lens](https://github.com/GegesVTT/gg-encounter-lens)
 
 ---
 
