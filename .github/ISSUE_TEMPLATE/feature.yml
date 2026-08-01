@@ -1,0 +1,30 @@
+name: Feature request / Pedido de función
+description: Suggest an idea. / Sugerir una idea.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve / Qué problema resuelve
+      description: |
+        Describe the situation at your table, not just the feature.
+        Knowing the actual problem often leads to a better solution than the one first imagined.
+
+        Contá la situación en tu mesa, no solo la función.
+        Conocer el problema real suele llevar a una solución mejor que la primera que uno imagina.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind / Qué tenés en mente
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Game system / Sistema de juego
+      placeholder: "dnd5e / pf2e"

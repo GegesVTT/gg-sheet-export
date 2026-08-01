@@ -1,0 +1,88 @@
+name: Bug report / Reporte de error
+description: Something is broken. / Algo no funciona.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please fill in the versions — most bugs are version-specific and I cannot reproduce them without those numbers.
+
+        Gracias por reportar. Por favor completá las versiones: casi todos los errores dependen de la versión y sin esos datos no puedo reproducirlos.
+
+  - type: input
+    id: foundry
+    attributes:
+      label: Foundry VTT version / Versión de Foundry VTT
+      description: "Settings → Support Details. Ex: 13.348 / 14.359"
+      placeholder: "13.348"
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Game system and version / Sistema de juego y versión
+      description: "Ex: dnd5e 5.3.3 / pf2e 8.1.2"
+      placeholder: "dnd5e 5.3.3"
+    validations:
+      required: true
+
+  - type: input
+    id: module
+    attributes:
+      label: Module version / Versión del módulo
+      description: "Shown in Manage Modules. / Aparece en Gestionar módulos."
+      placeholder: "1.10.3"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / Qué pasó
+      description: What you expected, and what happened instead. / Qué esperabas y qué pasó en su lugar.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Pasos para reproducirlo
+      placeholder: |
+        1. Open a character sheet / Abrir una ficha
+        2. Click Export PDF / Clic en Exportar PDF
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors / Errores de consola
+      description: |
+        Press F12, open the Console tab, reproduce the bug, and paste any red text.
+        This is the single most useful thing you can include.
+
+        Apretá F12, abrí la pestaña Consola, reproducí el error y pegá cualquier texto en rojo.
+        Es lo más útil que podés incluir.
+      render: shell
+
+  - type: input
+    id: other-modules
+    attributes:
+      label: Other modules active / Otros módulos activos
+      description: |
+        If you have many, try disabling all but this one and tell me if the bug persists.
+        Si tenés muchos, probá desactivando todos menos este y contame si el error sigue.
+      placeholder: "Only this one / Solo este"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting / Antes de enviar
+      options:
+        - label: I am using the latest release of the module. / Estoy usando la última versión publicada del módulo.
+          required: true
+        - label: I searched existing issues. / Busqué entre los issues existentes.
+          required: true
