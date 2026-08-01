@@ -84,25 +84,45 @@ export const THEMES = {
       "--card-title": '"Marcellus SC", Georgia, serif',
       "--card-body": '"Spectral", Georgia, serif'
     }
-  },
-  grimoire: {
-    id: "grimoire",
-    name: "Grimorio Oscuro",
-    schemaVersion: 1,
-    premium: true,
-    buyUrl: "",   // ← completar con el link de Patreon del pack
-    watermark: null,
-    fontImports: [FONTS_MARCELLUS_SPECTRAL],
-    vars: {
-      "--card-paper": "#04272c", "--card-ink": "#f2e6c8", "--card-back": "#021b1f",
-      "--card-back-ink": "#f2e6c8",
-      "--card-amber": "#c9a24b", "--card-amber-b": "#facc35", "--card-wine": "#c56a4e",
-      "--card-frame": "#e3ad4b", "--card-rule": "#2c4a4a", "--card-dim": "#8aa39b",
-      "--card-title": '"Marcellus SC", Georgia, serif',
-      "--card-body": '"Spectral", Georgia, serif'
-    }
   }
 };
+
+/**
+ * CATÁLOGO DE THEMES NO INSTALADOS.
+ *
+ * Themes que existen como pack aparte y que el usuario todavía no tiene. Acá
+ * viaja SOLO metadata: nombre, módulo que lo provee, link de compra y cinco
+ * colores para dibujar la miniatura del selector.
+ *
+ * Lo que NO viaja: el set completo de variables, las fuentes, el ornamento y el
+ * CSS del theme. Eso vive dentro del pack. Antes "Grimorio Oscuro" estaba
+ * entero adentro de este módulo gratuito con un flag `premium: true` que solo
+ * cambiaba cómo se dibujaba la tile — o sea, no retenía nada.
+ *
+ * Esto no es DRM: el JS de cliente siempre se puede leer. Lo que evita es
+ * regalar el pack por defecto a todo el que instale el módulo base.
+ *
+ * Cuando el pack se instala, llama a registerCardTheme() con el mismo `id` y
+ * su entrada real reemplaza a la del catálogo: la tile se desbloquea y el CTA
+ * de compra desaparece. Ver buildThemeTiles().
+ */
+export const THEME_CATALOG = [
+  {
+    id: "grimoire",
+    name: "Grimorio Oscuro",
+    moduleId: "gg-cards-grimoire",
+    buyUrl: "",   // ← completar cuando exista el Patreon del pack,
+    premium: true,
+    // Solo para la miniatura del selector.
+    preview: {
+      "--card-paper": "#04272c",
+      "--card-ink": "#f2e6c8",
+      "--card-amber-b": "#facc35",
+      "--card-wine": "#c56a4e",
+      "--card-dim": "#8aa39b"
+    }
+  }
+];
 
 export const THEME_SCHEMA_VERSION = 1;
 
@@ -141,7 +161,15 @@ export function themeStyle(themeId = "cronicas") {
 /** Arma las tiles del selector: cada una es una mini-carta con la paleta real
  *  del theme, más su estado (actual / gratis / premium con CTA de compra). */
 export function buildThemeTiles(currentId = "cronicas") {
-  return Object.values(THEMES).map((t) => {
+  // Instalados (incluye los que registraron los packs satélite) + los del
+  // catálogo que todavía NO están instalados. Si un pack ya registró su theme,
+  // su entrada real gana y la del catálogo no se dibuja.
+  const instalados = Object.values(THEMES);
+  const pendientes = THEME_CATALOG
+    .filter((c) => !THEMES[c.id])
+    .map((c) => ({ ...c, vars: c.preview || {}, locked: true }));
+
+  return [...instalados, ...pendientes].map((t) => {
     const v = t.vars || {};
     const paper = v["--card-paper"] || "#fbf7ee";
     const ink = v["--card-ink"] || "#241a12";

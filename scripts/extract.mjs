@@ -172,9 +172,22 @@ export async function extractActorData(actor) {
   const SENSE_TYPES = Object.keys(C.senses ?? {}).length
     ? Object.keys(C.senses)
     : ["blindsight", "darkvision", "tremorsense", "truesight"];
-  const senses = Object.entries(attrs.senses ?? {})
+
+  /* dnd5e 5.3 movió los sentidos de `attrs.senses.darkvision` a
+     `attrs.senses.ranges.darkvision`. El shim de compatibilidad sigue
+     respondiendo, pero cada lectura escupe un error de deprecación en la
+     consola (y Object.entries dispara TODOS los getters de una), y el soporte
+     desaparece en dnd5e 6.1.
+     Leemos primero la forma nueva y solo caemos a la vieja si no existe. */
+  const sensesRaw = attrs.senses ?? {};
+  const sensesSrc = (sensesRaw.ranges && typeof sensesRaw.ranges === "object")
+    ? sensesRaw.ranges
+    : sensesRaw;
+  const senseUnits = sensesRaw.units ?? sensesSrc.units ?? "ft";
+
+  const senses = Object.entries(sensesSrc)
     .filter(([k, v]) => SENSE_TYPES.includes(k) && typeof v === "number" && v > 0)
-    .map(([k, v]) => `${cfgLabel(C.senses, k)} ${v} ${attrs.senses?.units ?? "ft"}`)
+    .map(([k, v]) => `${cfgLabel(C.senses, k)} ${v} ${senseUnits}`)
     .join(", ");
 
   /* --- rasgos defensivos e idiomas --- */

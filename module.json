@@ -2,7 +2,7 @@
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
   "description": "Elegant reading view and exports for D&D 5e / Pathfinder 2e character sheets and journals, plus printable spell cards for D&D 5e. Vector-crisp PDF (native print), standalone HTML and Obsidian-ready Markdown; journals use a tome-style layout and spell cards are poker-size, double-sided, ready to cut. Part of Crónicas Bárdicas, the module suite by GegesVTT. — Visor y exportación de fichas de D&D 5e / Pathfinder 2e y de journals, más tarjetas de conjuros imprimibles para D&D 5e (tamaño póker, doble faz), a PDF vectorial, HTML autónomo y Markdown para Obsidian. Parte de Crónicas Bárdicas, la suite de módulos de GegesVTT.",
-  "version": "1.10.3",
+  "version": "1.11.0",
   "authors": [
     {
       "name": "Geges",
@@ -15,7 +15,7 @@
   ],
   "compatibility": {
     "minimum": "12",
-    "verified": "13"
+    "verified": "14"
   },
   "relationships": {
     "systems": [
@@ -24,7 +24,7 @@
         "type": "system",
         "compatibility": {
           "minimum": "3.0.0",
-          "verified": "5.2.4"
+          "verified": "5.3.3"
         }
       },
       {
@@ -61,7 +61,7 @@
   ],
   "url": "https://github.com/GegesVTT/gg-sheet-export",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
-  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.10.3/module.zip",
+  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.11.0/module.zip",
   "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",
   "bugs": "https://github.com/GegesVTT/gg-sheet-export/issues",
   "changelog": "https://github.com/GegesVTT/gg-sheet-export/releases",
@@ -69,27 +69,12 @@
   "media": [
     {
       "type": "cover",
-      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/cover.png",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/banner-sheet-export.png",
       "caption": "GG Sheet Export — Crónicas Bárdicas"
     },
     {
       "type": "icon",
       "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/icon.png"
-    },
-    {
-      "type": "screenshot",
-      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-antes-despues.jpg",
-      "caption": "Antes y después: ficha nativa vs. exportación"
-    },
-    {
-      "type": "screenshot",
-      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-una-sola-vista.jpg",
-      "caption": "Todo en una sola vista de lectura"
-    },
-    {
-      "type": "screenshot",
-      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-ficha-real.jpg",
-      "caption": "Ficha real de una mesa de campaña"
     }
   ]
 }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 40" width="1200" height="40" role="img" aria-label="divisor ornamental">
+  <!-- Vocabulario ggse-ui: filete recto doble, rombo central, espigas laterales.
+       Geometria pura, sin texto ni recursos externos: GitHub lo renderiza tal cual. -->
+  <g fill="none" stroke="#e3ad4b" stroke-width="2">
+    <path d="M40 20 H560"/><path d="M640 20 H1160"/>
+  </g>
+  <g fill="none" stroke="#e3ad4b" stroke-width="1" opacity="0.55">
+    <path d="M40 26 H560"/><path d="M640 26 H1160"/>
+  </g>
+  <path d="M600 6 L614 20 L600 34 L586 20 Z" fill="#e3ad4b"/>
+  <path d="M566 20 L578 14 L578 26 Z" fill="#e3ad4b"/>
+  <path d="M634 20 L622 14 L622 26 Z" fill="#e3ad4b"/>
+</svg>

@@ -1,5 +1,18 @@
+# =============================================================================
+# GegesVTT - .gitattributes CANONICO
+#
+# Identico en todos los repos de la suite. Fija los finales de linea dentro
+# del repositorio, sin depender de la config de git de cada maquina.
+#
+# Por que importa: release.yml lleva bloques de shell que corren en Linux.
+# Con CRLF, bash lee un \r invisible al final de cada linea y falla con
+# errores como "$'\r': command not found".
+# =============================================================================
+
+# Por defecto: git detecta si es texto y normaliza a LF dentro del repo.
 * text=auto
 
+# --- Siempre LF, aunque en Windows se editen con CRLF -----------------------
 *.yml    text eol=lf
 *.yaml   text eol=lf
 *.sh     text eol=lf
@@ -11,8 +24,10 @@
 *.html   text eol=lf
 *.md     text eol=lf
 *.svg    text eol=lf
+*.txt    text eol=lf
 LICENSE  text eol=lf
 
+# --- Binarios: git no los toca nunca ----------------------------------------
 *.png    binary
 *.jpg    binary
 *.jpeg   binary
@@ -25,7 +40,9 @@ LICENSE  text eol=lf
 *.otf    binary
 *.zip    binary
 *.pdf    binary
+*.mp3    binary
 *.ogg    binary
 *.webm   binary
 
+# --- Para que GitHub no cuente los packs como codigo del proyecto -----------
 packs/** linguist-vendored

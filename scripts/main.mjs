@@ -10,9 +10,45 @@ import { extractJournalData } from "./extract-journal.mjs";
 import { journalToMarkdown } from "./journal-markdown.mjs";
 import { buildJournalPrintHTML, buildJournalStandaloneHTML, buildJournalBody } from "./journal-print.mjs";
 import { extractSpellCards } from "./extract-spellcards.mjs";
-import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards, THEMES, registerCardTheme, buildThemeTiles } from "./spellcards-print.mjs";
+import { buildCardsBody, buildCardsPrintHTML, themeStyle, CARDS_CSS, fitSpellCards, THEMES, THEME_CATALOG, registerCardTheme, buildThemeTiles } from "./spellcards-print.mjs";
 
 const MODULE_ID = "gg-sheet-export";
+
+/* ── Suite Crónicas Bárdicas (gg-wp) ─────────────────────────────────────────
+   Integración OPCIONAL, por feature-detection. Nunca es dependencia dura:
+   sin gg-wp el módulo funciona igual, solo que sin botón en la sección GGWP.
+   El resto de las vías de entrada (header de la ficha, menú del directorio)
+   no dependen de esto. */
+Hooks.once("gg-wp.ready", (api) => {
+  // Membresía explícita en la suite (el diálogo "Acerca de" lista esto).
+  api.registerModule?.(MODULE_ID);
+
+  // Un solo tool: el selector de themes. Las demás acciones del módulo son por
+  // actor concreto (exportar ESTA ficha) y no tienen sentido en una botonera
+  // global; viven en el header de cada ficha.
+  api.registerTool?.({
+    name: "gg-sheet-export-themes",
+    title: game.i18n.localize("GGSE.Cards.ThemePickerTitle"),
+    icon: "fa-solid fa-palette",
+    order: 30,
+    button: true,
+    onChange: () => openThemePicker()
+  });
+
+  // Los themes premium que NO están instalados se publican como content-packs
+  // de la suite, así aparecen en "Acerca de" con su CTA de compra.
+  for (const c of THEME_CATALOG) {
+    if (THEMES[c.id]) continue; // ya instalado: no es una oferta
+    api.registerContentPack?.({
+      id: c.id,
+      moduleId: c.moduleId,
+      name: c.name,
+      tier: "premium",
+      purchaseUrl: c.buyUrl,
+      contentLanguages: ["es", "en"]
+    });
+  }
+});
 const SUPPORTED_TYPES = ["character", "npc"];
 
 /* ---------- despacho por sistema ----------
@@ -279,8 +315,13 @@ function openJournalViewer(journal) {
    D&D 5e por ahora. Salida a doble faz, tamaño póker, lista para cortar. */
 
 function spellCardTheme() {
-  try { return game.settings.get(MODULE_ID, "spellCardTheme") || "cronicas"; }
-  catch (e) { return "cronicas"; }
+  try {
+    const id = game.settings.get(MODULE_ID, "spellCardTheme") || "cronicas";
+    // El ajuste guarda un id, no el theme. Si ese theme ya no está instalado
+    // (el pack se desinstaló, o quedó seleccionado uno que ahora vive en un
+    // pack aparte) hay que caer al de la casa en vez de arrastrar un id muerto.
+    return THEMES[id] ? id : "cronicas";
+  } catch (e) { return "cronicas"; }
 }
 
 async function exportSpellCardsPdf(actor) {
@@ -544,6 +585,9 @@ Hooks.once("init", () => {
 
   // Tema de las tarjetas. Las choices se arman desde el registro de themes y
   // se refrescan cuando un módulo satélite registra el suyo (registerCardTheme).
+  // Solo los themes INSTALADOS. Los del catálogo (packs no instalados) no van
+  // acá: elegirlos desde el panel de ajustes de Foundry guardaría un id que no
+  // resuelve a nada. Se muestran en el selector visual, con su CTA de compra.
   const themeChoices = () => Object.fromEntries(Object.values(THEMES).map((t) => [t.id, t.name]));
   game.settings.register(MODULE_ID, "spellCardTheme", {
     name: "GGSE.Cards.SettingThemeName",
