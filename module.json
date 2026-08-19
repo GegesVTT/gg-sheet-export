@@ -1,12 +1,12 @@
 {
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
-  "description": "Elegant reading view and exports for D&D 5e / Pathfinder 2e character sheets and journals, plus printable spell cards for D&D 5e. Vector-crisp PDF (native print), standalone HTML and Obsidian-ready Markdown; journals use a tome-style layout and spell cards are poker-size, double-sided, ready to cut. Part of Crónicas Bárdicas, the module suite by GegesVTT. — Visor y exportación de fichas de D&D 5e / Pathfinder 2e y de journals, más tarjetas de conjuros imprimibles para D&D 5e (tamaño póker, doble faz), a PDF vectorial, HTML autónomo y Markdown para Obsidian. Parte de Crónicas Bárdicas, la suite de módulos de GegesVTT.",
+  "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. Part of Crónicas Bárdicas by GegesVTT — more free GM tools at https://bardica.ar — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros doble faz listas para cortar.",
   "version": "1.11.0",
   "authors": [
     {
       "name": "Geges",
-      "url": "https://github.com/GegesVTT",
+      "url": "https://bardica.ar/",
       "flags": {
         "brand": "GegesVTT",
         "suite": "Crónicas Bárdicas"
@@ -59,7 +59,7 @@
       "path": "lang/en.json"
     }
   ],
-  "url": "https://github.com/GegesVTT/gg-sheet-export",
+  "url": "https://bardica.ar/",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
   "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.11.0/module.zip",
   "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",

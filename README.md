@@ -12,6 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Foundry-v12-green" alt="Foundry v12">
   <img src="https://img.shields.io/badge/Foundry-v13-green" alt="Foundry v13">
+  <img src="https://img.shields.io/badge/Foundry-v14-green" alt="Foundry v14">
   <img src="https://img.shields.io/badge/D%26D-5e-red" alt="D&D 5e">
   <img src="https://img.shields.io/badge/Pathfinder-2e-orange" alt="Pathfinder 2e">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License: MIT">
@@ -19,6 +20,8 @@
 </p>
 
 <p align="center"><strong>English</strong> · <a href="#-español">Español</a></p>
+
+<p align="center"><a href="https://bardica.ar"><strong>bardica.ar</strong></a> · more free GM tools · más herramientas gratis</p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/cover.png" width="100%" alt="GG Sheet Export — GegesVTT">
@@ -339,3 +342,13 @@ Parte de **Crónicas Bárdicas**, la suite de módulos para Foundry VTT de Geges
 ---
 
 <p align="center"><em>GG Sheet Export · GegesVTT · Crónicas Bárdicas</em></p>
+
+---
+
+<p align="center">
+  Made by <strong>Bárdica</strong> — free tools, printable cards and daily games for GMs,
+  in Spanish and English.<br>
+  Hecho por <strong>Bárdica</strong> — herramientas gratis, cartas imprimibles y juegos
+  diarios para directores.<br>
+  <a href="https://bardica.ar"><strong>bardica.ar</strong></a>
+</p>
