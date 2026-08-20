@@ -1,12 +1,13 @@
 {
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
-  "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. Part of Crónicas Bárdicas by GegesVTT — more free GM tools at https://bardica.ar — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros doble faz listas para cortar.",
-  "version": "1.11.0",
+  "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. · ES — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros a doble faz listas para cortar. · Crónicas Bárdicas by GegesVTT — more free GM tools at https://bardica.ar",
+  "version": "1.11.1",
   "authors": [
     {
       "name": "Geges",
       "url": "https://bardica.ar/",
+      "discord": "Gesu7",
       "flags": {
         "brand": "GegesVTT",
         "suite": "Crónicas Bárdicas"
@@ -61,7 +62,7 @@
   ],
   "url": "https://bardica.ar/",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
-  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.11.0/module.zip",
+  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.11.1/module.zip",
   "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",
   "bugs": "https://github.com/GegesVTT/gg-sheet-export/issues",
   "changelog": "https://github.com/GegesVTT/gg-sheet-export/releases",
@@ -71,6 +72,31 @@
       "type": "cover",
       "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/banner-sheet-export.png",
       "caption": "GG Sheet Export — Crónicas Bárdicas"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-cartas-pliego.jpg",
+      "caption": "Nine spell cards on one A4 sheet, cut marks included"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-antes-despues.jpg",
+      "caption": "Before and after: the default sheet vs. the exported PDF"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-una-sola-vista.jpg",
+      "caption": "The whole character on one scroll — no tabs"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-ficha-real.jpg",
+      "caption": "A real sheet, printed and on the table"
+    },
+    {
+      "type": "screenshot",
+      "url": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/docs/images/screenshot-visor.jpg",
+      "caption": "The reading view inside Foundry"
     },
     {
       "type": "icon",

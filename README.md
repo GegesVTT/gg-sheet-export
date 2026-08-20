@@ -337,7 +337,7 @@ ficha de personaje · imprimir · imprimible · exportar PDF · exportar HTML ·
 
 MIT — © Geges
 
-Parte de **Crónicas Bárdicas**, la suite de módulos para Foundry VTT de Geges (Gonzalo Gesualdo): [GG Nameforge](https://github.com/GegesVTT/gg-nameforge) · [GG Encounter Lens](https://github.com/GegesVTT/gg-encounter-lens)
+Parte de **Crónicas Bárdicas**, la suite de módulos para Foundry VTT de Geges (Gonzalo Gesualdo): [GG Nameforge](https://github.com/GegesVTT/gg-nameforge) · [GG Encounter Lens](https://github.com/GegesVTT/gg-encounter-lens) · [GG Fog Scout](https://github.com/GegesVTT/gg-fog-scout)
 
 ---
 
