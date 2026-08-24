@@ -17,7 +17,7 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const loc = (k) => game.i18n.localize(k);
 const BRAND = "CRÓNICAS BÁRDICAS";
 
-import { LOGO_WATERMARK, logoDataUri } from "./spellcards-logo.mjs";
+import { LOGO_WATERMARK, LAUD_MASK, MARCA_MASK } from "./spellcards-marca.mjs";
 
 /* ---------- íconos de tipo de daño (SVG embebido, sin dependencias) ----------
    Vectoriales: se ven igual en el visor y en el PDF, y no dependen de Font
@@ -155,7 +155,13 @@ export function themeStyle(themeId = "cronicas") {
   const t = THEMES[themeId] ?? THEMES.cronicas;
   const imports = (t.fontImports ?? []).map((u) => `@import url("${u}");`).join("\n");
   const vars = Object.entries(t.vars).map(([k, v]) => `${k}:${v};`).join("");
-  return `${imports}\n${t.fontCSS ?? ""}\n.ggse-cards{${vars}}\n${t.customCSS ?? ""}`;
+  /* --card-logo y --card-marca NO son variables de theme: son del host, y por
+     eso se sirven acá y no adentro de THEMES. Van como data: URI y no como ruta
+     al asset porque el HTML exportado se lo baja el usuario a Descargas, donde
+     ninguna ruta del módulo existe. Es el mismo bug que la v37 encontró en la
+     web: el dorso salía sin laúd y nadie se daba cuenta. */
+  const host = `--card-logo:url("${LAUD_MASK}");--card-marca:url("${MARCA_MASK}");`;
+  return `${imports}\n${t.fontCSS ?? ""}\n.ggse-cards{${vars}${host}}\n${t.customCSS ?? ""}`;
 }
 
 /** Arma las tiles del selector: cada una es una mini-carta con la paleta real
@@ -285,17 +291,34 @@ export const CARDS_CSS = `
 /* ---- dorso (siempre oscuro; --card-back) ---- */
 .ggse-back { background:var(--card-back); color:var(--card-back-ink); }
 
-/* decorativo: hechizo corto (todo entró en el frente) */
-.ggse-back.deco { align-items:center; justify-content:center; text-align:center; gap:2.4mm; }
-.ggse-back.deco .b-kick { font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.3em;
-  text-transform:uppercase; color:var(--card-amber); }
+/* decorativo: el hechizo entró entero en el frente.
+
+   v38 — el dorso firma con el logotipo. Se fueron el rótulo de arriba (.b-kick)
+   y el pie de texto (.b-foot); abajo va el logotipo de Bárdica con la URL, y el
+   laúd queda como emblema en el centro.
+
+   Los DOS dibujos se pintan por máscara con --card-amber-b: un solo archivo
+   sirve para todos los themes, presentes y futuros, sin un vector por theme.
+   Es la política que estrenó el laúd en la v37, ahora también para el logotipo.
+   El dibujo sale de --card-logo y --card-marca, que las sirve el host. */
+.ggse-back.deco { align-items:center; justify-content:center; text-align:center; gap:2.4mm;
+  padding-bottom:17mm; }
 .ggse-back.deco .b-name { font-family:var(--card-title); font-weight:400; font-size:13pt;
   line-height:1.1; color:var(--card-amber-b); }
 .ggse-back.deco .b-rombo { width:2.6mm; height:2.6mm; background:var(--card-amber-b); transform:rotate(45deg); }
-.ggse-back.deco .b-logo { height:20mm; width:auto; }
-.ggse-back.deco .b-foot { position:absolute; bottom:5.4mm; left:0; right:0; text-align:center;
-  font-family:var(--card-title); font-size:5.4pt; letter-spacing:0.22em;
-  text-transform:uppercase; color:var(--card-amber); }
+.ggse-back.deco .b-logo { height:17mm; width:9.5mm;   /* el vector es 268,78 × 481,82 */
+  background-color:var(--card-amber-b);
+  -webkit-mask:var(--card-logo) no-repeat center / contain;
+  mask:var(--card-logo) no-repeat center / contain; }
+/* La firma es absoluta y la columna de arriba le reserva el lugar con el
+   padding-bottom: así un nombre de dos líneas no se le monta encima. */
+.ggse-back.deco .b-pie { position:absolute; left:5.2mm; right:5.2mm; bottom:5mm; text-align:center; }
+.ggse-back.deco .b-marca { display:block; width:30mm; height:9.36mm; margin:0 auto;  /* 741,41 × 231,36 */
+  background-color:var(--card-amber-b);
+  -webkit-mask:var(--card-marca) no-repeat center / contain;
+  mask:var(--card-marca) no-repeat center / contain; }
+.ggse-back.deco .b-url { display:block; margin-top:1.6mm; font-family:var(--card-title);
+  font-size:5.6pt; letter-spacing:0.26em; text-transform:uppercase; color:var(--card-amber); }
 
 /* descripción: hechizo largo (letras claras sobre el dorso oscuro) */
 .ggse-back.desc .b-head { display:flex; justify-content:space-between; align-items:baseline; gap:1.4mm;
@@ -322,7 +345,7 @@ function watermark(themeId) {
   return src ? `<img class="c-wm" src="${src}" alt="">` : "";
 }
 
-function frontCard(sp, id, themeId, decorative) {
+function frontCard(sp, id, themeId) {
   const stat = (k, v) => `<div class="c-row"><div class="c-k">${esc(k)}</div><div class="c-v">${esc(v)}</div></div>`;
   const combat = [];
   if (sp.toHit) combat.push(`<span class="cbadge atk">${loc("GGSE.Cards.Attack")} ${esc(sp.toHit)}</span>`);
@@ -345,7 +368,7 @@ function frontCard(sp, id, themeId, decorative) {
     scaling = `<div class="c-scaling"><span>${loc("GGSE.Cards.PerSlot")} +${esc(sp.scaling.upcast)}</span></div>`;
   }
 
-  return `<div class="ggse-card ggse-front${decorative ? " deco" : ""}" style="--school:${sp.schoolColor}">
+  return `<div class="ggse-card ggse-front" style="--school:${sp.schoolColor}">
     ${watermark(themeId)}
     <div class="c-kick">${BRAND}</div>
     <div class="c-name">${esc(sp.name)}</div>
@@ -360,7 +383,7 @@ function frontCard(sp, id, themeId, decorative) {
     ${combat.length ? `<div class="c-combat">${combat.join("")}</div>` : ""}
     ${scaling}
     ${tags.length ? `<div class="c-tags">${tags.join("")}</div>` : ""}
-    <div class="c-desc" data-spell="${id}">${decorative ? (sp.descHTML || "") : ""}</div>
+    <div class="c-desc" data-spell="${id}"></div>
   </div>`;
 }
 
@@ -373,29 +396,33 @@ function backFill(themeId) {
   return `<img class="c-bg" src="data:image/svg+xml;base64,${btoa(svg)}" alt="">`;
 }
 
-/** Logo del laúd (plano) en el color de acento del theme, para el dorso decorativo. */
-function logoMark(themeId) {
-  const t = THEMES[themeId] ?? THEMES.cronicas;
-  const color = (t.vars && t.vars["--card-amber-b"]) || "#e3ad4b";
-  return `<img class="b-logo" src="${logoDataUri(color)}" alt="">`;
+/** El dorso decorativo, para cuando la descripción entró entera en el frente.
+ *  Va adentro de un <template> con clase `ggse-deco-tpl` y NO `b-deco`: las
+ *  clases `.b-*` son estilos de dorso y verificar-cartas.py las compara contra
+ *  la web. Un marcador de template no es un estilo y no tiene que ensuciar ese
+ *  chequeo. */
+function decoBack(sp) {
+  return `<span aria-hidden="true" class="b-logo"></span>
+    <div class="b-rombo"></div>
+    <div class="b-name">${esc(sp.name)}</div>
+    <div class="b-pie"><span aria-hidden="true" class="b-marca"></span><span class="b-url">bardica.ar</span></div>`;
 }
 
-function backCard(sp, id, themeId, decorative) {
-  if (decorative) {
-    return `<div class="ggse-card ggse-back deco">
-    ${backFill(themeId)}
-    <div class="b-kick">${BRAND}</div>
-    ${logoMark(themeId)}
-    <div class="b-name">${esc(sp.name)}</div>
-    <div class="b-foot">GGWP</div>
-  </div>`;
-  }
+/**
+ * Todas las cartas nacen con el dorso de descripción y con el decorativo
+ * guardado en un <template>. Cuál queda lo decide fitSpellCards MIDIENDO el
+ * desborde, no un umbral de caracteres: el mismo hechizo tenía que dar el mismo
+ * resultado acá, en el editor de la web y en los mazos impresos, y con un
+ * umbral fijo no daba.
+ */
+function backCard(sp, id, themeId) {
   const refText = sp.sourceRef
     ? `▸ ${esc(sp.sourceRef)}`
     : `▸ ${loc("GGSE.Cards.SeeManual")}`;
   return `<div class="ggse-card ggse-back desc">
     ${backFill(themeId)}
     ${watermark(themeId)}
+    <template class="ggse-deco-tpl">${decoBack(sp)}</template>
     <div class="b-head"><div class="b-name">${esc(sp.name)}</div><div class="b-sub">${esc(sp.levelLabel)}</div></div>
     ${sp.material ? `<div class="b-material">${loc("GGSE.Cards.Material")}: ${esc(sp.material)}</div>` : ""}
     <div class="b-desc" data-spell="${id}">${sp.descHTML || ""}</div>
@@ -418,11 +445,9 @@ function mirrorIndex(i) {
  * @param {{ mirror?: boolean }} opts  mirror=true para impresión doble faz;
  *   false para la vista previa (orden natural, más fácil de leer).
  */
-/** Máximo de caracteres de descripción que entran cómodos en el frente.
- *  Por debajo → dorso decorativo (todo en el frente); por encima → dorso de
- *  descripción. Ajustable si algún hechizo queda justo. */
-const FRONT_DESC_MAX = 300;
-const descLen = (sp) => String(sp?.descHTML || "").replace(/<[^>]+>/g, "").trim().length;
+/* El umbral de 300 caracteres se fue: decidía frente/dorso adivinando, y un
+   hechizo de 290 caracteres que igual no entraba terminaba con la letra
+   achicada a 6 pt en el frente. Ahora decide fitSpellCards, midiendo. */
 
 export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {}) {
   const chunks = [];
@@ -435,10 +460,9 @@ export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {
     for (let i = 0; i < 9; i++) {
       const sp = group[i];
       const gid = gi * 9 + i;
-      const deco = sp ? descLen(sp) <= FRONT_DESC_MAX : false;
-      fronts.push(sp ? frontCard(sp, gid, themeId, deco) : blank());
+      fronts.push(sp ? frontCard(sp, gid, themeId) : blank());
       const bi = mirror ? mirrorIndex(i) : i;
-      backs[bi] = sp ? backCard(sp, gid, themeId, deco) : blank();
+      backs[bi] = sp ? backCard(sp, gid, themeId) : blank();
     }
     const label = chunks.length > 1 ? ` ${gi + 1}/${chunks.length}` : "";
     return `
@@ -454,19 +478,25 @@ export function buildCardsBody(data, themeId = "cronicas", { mirror = true } = {
 /* ---------- auto-ajuste (puro DOM, se reusa en visor e impresión) ---------- */
 
 export function fitSpellCards(root) {
+  /* Corta un párrafo por ORACIÓN, no por nodo entero.
+
+     Sin esto, un primer párrafo largo no entra completo en el frente y se va
+     todo al dorso: la cara queda con el bloque de datos y ni una línea de
+     reglas. Cortando por oración la cara siempre se llena. No reescribe nada:
+     parte donde ya había un punto.
+
+     Lo que sí se pierde en ESE párrafo es el marcado interno (negritas), porque
+     el corte trabaja sobre textContent. Es un párrafo por carta y sólo el que
+     cae justo en la juntura. */
+  const ORACION = /(?<=[.:])\s+(?=[A-ZÁÉÍÓÚÑ¿«])/;
+
   // Frentes: achica el nombre si desborda su caja.
   root.querySelectorAll(".ggse-front .c-name").forEach((el) => {
     let pt = 13;
     while (el.scrollHeight > el.clientHeight + 1 && pt > 8) { pt -= 0.5; el.style.fontSize = pt + "pt"; }
   });
 
-  // Dorso decorativo: la descripción va en el frente; achicar si desborda.
-  root.querySelectorAll(".ggse-front.deco .c-desc").forEach((el) => {
-    let pt = 8;
-    while (el.scrollHeight > el.clientHeight + 1 && pt > 6) { pt -= 0.25; el.style.fontSize = pt + "pt"; }
-  });
-
-  // Descripciones: cada dorso se empareja con el frente por data-spell.
+  // Cada dorso se empareja con su frente por data-spell.
   root.querySelectorAll(".ggse-back .b-desc").forEach((back) => {
     const id = back.getAttribute("data-spell");
     const card = back.closest(".ggse-card");
@@ -474,24 +504,71 @@ export function fitSpellCards(root) {
     const front = id != null ? root.querySelector(`.ggse-front .c-desc[data-spell="${id}"]`) : null;
 
     const fitsBack = () => back.scrollHeight <= back.clientHeight + 1;
-
-    // 1) ¿Entra todo en el dorso a tamaño base? → corto/medio, frente limpio.
     back.style.fontSize = "8pt";
-    if (fitsBack()) return;
 
-    // 2) LARGO: la descripción arranca en el frente y sigue en el dorso.
+    // 1) Llenar el frente: nodos enteros mientras entren.
     if (front) {
       front.style.fontSize = "8pt";
       const fitsFront = () => front.scrollHeight <= front.clientHeight + 1;
       let guard = 0;
-      while (fitsFront() && back.firstChild && guard++ < 4000) {
-        front.appendChild(back.firstChild);
+      while (fitsFront() && back.firstChild && guard++ < 4000) front.appendChild(back.firstChild);
+
+      // 2) El último nodo hizo desbordar. Antes de devolverlo entero, intentar
+      //    partirlo: por <li> si es una lista, por oración si es un párrafo.
+      if (!fitsFront() && front.lastChild) {
+        const nodo = front.lastChild;
+        const esEl = nodo.nodeType === 1;
+        if (esEl && nodo.tagName === "UL" && nodo.children.length > 1) {
+          const resto = nodo.cloneNode(false);
+          let g = 0;
+          while (!fitsFront() && nodo.lastElementChild && g++ < 400) {
+            resto.insertBefore(nodo.lastElementChild, resto.firstChild);
+          }
+          if (!nodo.children.length) nodo.remove();
+          if (resto.children.length) back.insertBefore(resto, back.firstChild);
+        } else if (esEl && (nodo.textContent || "").trim()) {
+          const partes = (nodo.textContent || "").trim().split(ORACION);
+          if (partes.length > 1) {
+            let corte = partes.length - 1;
+            while (corte > 0) {
+              nodo.textContent = partes.slice(0, corte).join(" ");
+              if (fitsFront()) break;
+              corte--;
+            }
+            if (corte <= 0) {
+              nodo.textContent = partes.join(" ");
+              back.insertBefore(nodo, back.firstChild);
+            } else {
+              const resto = nodo.cloneNode(false);
+              resto.textContent = partes.slice(corte).join(" ");
+              back.insertBefore(resto, back.firstChild);
+            }
+          } else {
+            back.insertBefore(nodo, back.firstChild);
+          }
+        } else {
+          back.insertBefore(nodo, back.firstChild);
+        }
       }
-      // El último nodo hizo desbordar el frente: devolvelo al inicio del dorso.
-      if (!fitsFront() && front.lastChild) back.insertBefore(front.lastChild, back.firstChild);
     }
 
-    // 3) El resto va al dorso: achicar y, si no entra, resumir + referencia.
+    // 3) ¿Quedó algo en el dorso? Si no, el dorso pasa a ser el decorativo.
+    //    Acá es donde se decide deco vs. descripción, midiendo y no adivinando.
+    if (!(back.textContent || "").trim()) {
+      const tpl = card && card.querySelector("template.ggse-deco-tpl");
+      if (tpl) {
+        const fondo = card.querySelector(".c-bg");
+        card.className = "ggse-card ggse-back deco";
+        card.innerHTML = "";
+        if (fondo) card.appendChild(fondo);
+        card.appendChild(tpl.content.cloneNode(true));
+        const caraCard = front && front.closest(".ggse-card");
+        if (caraCard) caraCard.classList.add("deco");
+      }
+      return;
+    }
+
+    // 4) Sigue habiendo texto en el dorso: achicar y, en el peor caso, resumir.
     let pt = 8;
     back.style.fontSize = pt + "pt";
     while (!fitsBack() && pt > 6.5) { pt -= 0.25; back.style.fontSize = pt + "pt"; }

@@ -1,7 +1,7 @@
 {
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
-  "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. · ES — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros a doble faz listas para cortar. · Crónicas Bárdicas by GegesVTT — more free GM tools at https://bardica.ar",
+  "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. · ES — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros a doble faz listas para cortar. · Part of Crónicas Bárdicas, by Bárdica — more free GM tools at https://bardica.ar",
   "version": "1.11.1",
   "authors": [
     {
@@ -9,7 +9,7 @@
       "url": "https://bardica.ar/",
       "discord": "Gesu7",
       "flags": {
-        "brand": "GegesVTT",
+        "brand": "Bárdica",
         "suite": "Crónicas Bárdicas"
       }
     }
