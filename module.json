@@ -2,7 +2,7 @@
   "id": "gg-sheet-export",
   "title": "GG Sheet Export",
   "description": "Your table plays on Foundry; your wizard still wants paper. One-screen reading view for D&D 5e and Pathfinder 2e sheets, plus exports that look printed: vector-crisp PDF, standalone HTML, Obsidian-ready Markdown, tome-style journals, and poker-size double-sided spell cards with cut marks. · ES — Vista de lectura y exportación de fichas de D&D 5e y PF2e: PDF vectorial, HTML autónomo, Markdown para Obsidian y tarjetas de conjuros a doble faz listas para cortar. · Part of Crónicas Bárdicas, by Bárdica — more free GM tools at https://bardica.ar",
-  "version": "1.11.1",
+  "version": "1.12.0",
   "authors": [
     {
       "name": "Geges",
@@ -62,7 +62,7 @@
   ],
   "url": "https://bardica.ar/",
   "manifest": "https://github.com/GegesVTT/gg-sheet-export/releases/latest/download/module.json",
-  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.11.1/module.zip",
+  "download": "https://github.com/GegesVTT/gg-sheet-export/releases/download/v1.12.0/module.zip",
   "readme": "https://raw.githubusercontent.com/GegesVTT/gg-sheet-export/main/README.md",
   "bugs": "https://github.com/GegesVTT/gg-sheet-export/issues",
   "changelog": "https://github.com/GegesVTT/gg-sheet-export/releases",
